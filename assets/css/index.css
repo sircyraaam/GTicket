@@ -1,0 +1,83 @@
+
+.rgb-header {
+    font-size: 3rem;
+    font-weight: bold;
+    animation: rgbColor 5s infinite linear;
+    text-align: center;
+}
+
+.typing-header {
+    font-size: 2.5rem;
+    font-weight: bold;
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    border-right: 3px solid transparent;
+    width: fit-content;
+    margin: 50px auto;
+}
+
+.typing-text {
+    display: inline-block;
+    animation: typing 3s steps(22) forwards, rgbColor 5s infinite;
+}
+
+@keyframes typing {
+    from { width: 0; }
+    to { width: 22ch; }
+}
+  
+@keyframes rgbColor {
+    0%   { color: #000000; }
+    16%  { color: #083759; }
+    33%  { color: #602e03; }
+    50%  { color: #FF9149; }
+    66%  { color: #056076; }
+    83%  { color: #144325; }
+    100% { color: #50511d; }
+}
+
+.typed-cursor {
+    vertical-align: middle;
+    margin: 0px;
+}
+
+.card {
+    border: 1px solid #343534;
+    border-radius: 8px; /* Optional: for rounded corners */
+    padding: 20px;
+    background-color: transparent; /* Dark background for contrast */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7); /* Subtle glow effect */
+}
+
+.card:hover {
+    transform: scale(1.02);
+    border-color: #3bc6f4; /* Change to red on hover (like some keyboard themes) */
+    box-shadow: 0 0 15px rgba(8, 75, 181, 0.7); /* Glowing red on hover */
+}
+
+/* Mobile Styles */
+@media screen and (max-width: 768px) {
+    .card {
+        padding: 1rem; /* Reduce padding on mobile */
+        margin: 10px; /* Optional: Add margin to prevent edge contact */
+    }
+
+    .card:hover {
+        transform: scale(1.02); /* Slightly less scale on mobile for smoother interaction */
+    }
+}
+
+/* For very small screens (phones in portrait mode) */
+@media screen and (max-width: 480px) {
+    .card {
+        padding: 0.75rem; /* Further reduce padding for small screens */
+    }
+
+    .card::before {
+        top: -3px; /* Adjust pseudo-element positions for smaller screens */
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+    }
+}
