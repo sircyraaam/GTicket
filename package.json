@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "sweetalert2": "^11.20.0",
+    "sweetalert2": "^11.21.1",
     "typed.js": "^2.1.0"
   }
 }

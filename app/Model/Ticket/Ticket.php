@@ -7,13 +7,15 @@ use app\Model\DbConnection\DbConfig;
 class Ticket extends DbConfig{
     protected $data = null;
     public function __construct($post_data){
+        parent::__construct();
         $this->data = $post_data;
     }
 
-    public function addNewTicketRecord() {
+
+    public function addNewTicketRecord($filePath = null) {
         try {
             $conn = $this->db_connection();
-            $stmt = $conn->prepare("CALL gticket.sp_saveTicketRecord(?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt = $conn->prepare("CALL gticket.sp_saveTicketRecord(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             $stmt->bindParam(1, $this->data['name']);
             $stmt->bindParam(2, $this->data['sbu']);
             $stmt->bindParam(3, $this->data['title']);
@@ -25,7 +27,9 @@ class Ticket extends DbConfig{
             $stmt->bindParam(9, $this->data['category']);
             $stmt->bindParam(10, $this->data['userCategory_text']);
             $stmt->bindParam(11, $this->data['userFullName_text']);
-            $stmt->bindParam(12, $this->data['ticket_type']);
+            $stmt->bindParam(12, $this->data['userSBU_text']);
+            $stmt->bindParam(13, $this->data['ticket_type']);
+            $stmt->bindParam(14, $filePath);
             $stmt->execute();
             $result = $stmt->fetch(\PDO::FETCH_ASSOC);
             $stmt->closeCursor();
@@ -33,38 +37,40 @@ class Ticket extends DbConfig{
             if (!$result || !isset($result['data'])) {
                 http_response_code(500);
                 header('Content-Type: application/json');
-                return (['error' => 'Failed to save ticket in database']);
+                return ['error' => 'Failed to save ticket in database'];
             }
-    
+
             $decoded = json_decode($result['data'], true);
 
             if (!$decoded || !isset($decoded['control_number'])) {
                 http_response_code(500);
                 header('Content-Type: application/json');
-                return (['error' => 'Invalid data returned from stored procedure']);
+                return ['error' => 'Invalid data returned from stored procedure'];
             }
-    
+
             $localTicketId = $decoded['control_number'];
-    
-            $apiKey = 'EA50B121-A98B-4A95-9700-D3FFEEAFB17F';
-            $sdpUrl = 'http://103.21.14.107:9004/api/v3/requests';
-    
+
+            $apiKey = $this->getApiKey();
+            $sdpUrl = ($this->getSdpUrl()) . '/requests';
+
             $payload = [
                 'request' => [
                     'subject' => $this->data['title'],
-                    'description' => "Local Ticket ID: $localTicketId\n\n" .
-                                     "User Declared Email: " . $this->data['email'] . "\n\n" .
-                                     "User Declared Contact: " . $this->data['contact'] . "\n\n" .
-                                     "Ticket Details: " . "\n\n" .
-                                     $this->data['description'],
+                    'description' =>
+                        "Local Ticket ID: $localTicketId\n\n" .
+                        "User Declared Email: " . $this->data['email'] . "\n\n" .
+                        "User Declared Contact: " . $this->data['contact'] . "\n\n" .
+                        "Ticket Details: \n\n" .
+                        $this->data['description'],
                     'requester' => ['id' => $this->data['name']],
-                    'status' => ['name' => 'Open'],
+                    'status' => ['id' => '1'],
                     'service_category' => ['id' => $this->data['category']],
+                    'site' => ['id' => $this->data['sbu']],
                 ]
             ];
-    
-            $formData = http_build_query(['input_data' => json_encode($payload)]);
-    
+
+            $jsonPayload = json_encode($payload);
+
             $ch = curl_init($sdpUrl);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
@@ -73,72 +79,110 @@ class Ticket extends DbConfig{
                     'Authtoken: ' . $apiKey,
                     'Content-Type: application/x-www-form-urlencoded'
                 ],
-                CURLOPT_POSTFIELDS => $formData
+                CURLOPT_POSTFIELDS => http_build_query(['input_data' => $jsonPayload])
             ]);
-    
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $error = curl_error($ch);
             curl_close($ch);
 
-            if ($httpCode >= 200 && $httpCode < 300) {
-                $sdpData = json_decode($response, true);
-                $sdpId = $sdpData['request']['id'] ?? null;
-            
-
-                    $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                    $stmtSdp->bindParam(1, $sdpId);
-                    $stmtSdp->bindParam(2, $localTicketId);
-                    $stmtSdp->bindParam(3, $this->data['name']);
-                    $stmtSdp->bindParam(4, $this->data['sbu']);
-                    $stmtSdp->bindParam(5, $this->data['title']);
-                    $stmtSdp->bindParam(6, $this->data['description']);
-                    $stmtSdp->bindParam(7, $this->data['email']);
-                    $stmtSdp->bindParam(8, $this->data['contact']);
-                    $stmtSdp->bindParam(9, $this->data['ip_address']);
-                    $stmtSdp->bindParam(10, $this->data['remarks']);
-                    $stmtSdp->bindParam(11, $this->data['category']);
-                    $stmtSdp->bindParam(12, $this->data['userCategory_text']);
-                    $stmtSdp->bindParam(13, $this->data['userFullName_text']);
-                    $stmtSdp->execute();
-                    $resulttoAPI = $stmtSdp->fetch(\PDO::FETCH_ASSOC);
-
-                    
-                    if (($resulttoAPI['result'] ?? null) != 1) {
-                        return [
-                            'error' => 'Stored procedure did not return expected success result',
-                            'debug_result' => $resulttoAPI
-                        ];
-                    }
-
-                    http_response_code(201);
-                    header('Content-Type: application/json');
-                    return ([
-                        'local_ticket_id' => $localTicketId,
-                        'sdp_id' => $sdpId,
-                        'result' => $decoded
-                    ]);
-                
-            } else {
+            if ($httpCode < 200 || $httpCode >= 300) {
                 error_log("SDP ticket creation failed. HTTP $httpCode | Error: $error | Response: $response");
                 http_response_code(500);
                 header('Content-Type: application/json');
-                return ([
+                return [
                     'error' => 'Failed to create SDP ticket',
                     'details' => json_decode($response, true) ?: $response
-                ]);
+                ];
             }
-    
+
+            $sdpData = json_decode($response, true);
+            $sdpId = $sdpData['request']['id'] ?? null;
+
+            if (!$sdpId) {
+                return ['error' => 'SDP ticket ID not returned'];
+            }
+
+            if ($filePath && file_exists($filePath)) {
+                $attachmentUrl = ($this->getSdpUrl()) . '/attachments';
+
+                $attachmentPayload = [
+                    'input_data' => json_encode([
+                        'attachment' => [
+                            'request' => ['id' => $sdpId]
+                        ]
+                    ]),
+                    'attachment' => new \CURLFile($filePath)
+                ];
+
+                $chAttach = curl_init($attachmentUrl);
+                curl_setopt_array($chAttach, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_HTTPHEADER => [
+                        'Authtoken: ' . $apiKey
+                    ],
+                    CURLOPT_POSTFIELDS => $attachmentPayload
+                ]);
+
+                $attachmentResponse = curl_exec($chAttach);
+                $attachmentHttpCode = curl_getinfo($chAttach, CURLINFO_HTTP_CODE);
+                $attachmentError = curl_error($chAttach);
+                curl_close($chAttach);
+
+                if ($attachmentHttpCode < 200 || $attachmentHttpCode >= 300) {
+                    error_log("SDP attachment upload failed. HTTP $attachmentHttpCode | Error: $attachmentError | Response: $attachmentResponse");
+                    return [
+                        'error' => 'Failed to upload attachment',
+                        'details' => json_decode($attachmentResponse, true) ?: $attachmentResponse
+                    ];
+                }
+            }
+
+            $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmtSdp->bindParam(1, $sdpId);
+            $stmtSdp->bindParam(2, $localTicketId);
+            $stmtSdp->bindParam(3, $this->data['name']);
+            $stmtSdp->bindParam(4, $this->data['sbu']);
+            $stmtSdp->bindParam(5, $this->data['title']);
+            $stmtSdp->bindParam(6, $this->data['description']);
+            $stmtSdp->bindParam(7, $this->data['email']);
+            $stmtSdp->bindParam(8, $this->data['contact']);
+            $stmtSdp->bindParam(9, $this->data['ip_address']);
+            $stmtSdp->bindParam(10, $this->data['remarks']);
+            $stmtSdp->bindParam(11, $this->data['category']);
+            $stmtSdp->bindParam(12, $this->data['userCategory_text']);
+            $stmtSdp->bindParam(13, $this->data['userFullName_text']);
+            $stmtSdp->bindParam(14, $this->data['userSBU_text']);
+            $stmtSdp->execute();
+            $resulttoAPI = $stmtSdp->fetch(\PDO::FETCH_ASSOC);
+
+            if (($resulttoAPI['result'] ?? null) != 1) {
+                return [
+                    'error' => 'Stored procedure did not return expected success result',
+                    'debug_result' => $resulttoAPI
+                ];
+            }
+
+            http_response_code(201);
+            header('Content-Type: application/json');
+            return [
+                'local_ticket_id' => $localTicketId,
+                'sdp_id' => $sdpId,
+                'result' => $decoded
+            ];
+
         } catch (\PDOException $e) {
             http_response_code(500);
             header('Content-Type: application/json');
-            return ([
+            return [
                 'error' => 'Database error',
                 'details' => $e->getMessage()
-            ]);
+            ];
         }
     }
-    
+
 
     public function loadAllActiveWarehouses(){
         $conn = $this->db_connection();
@@ -153,9 +197,19 @@ class Ticket extends DbConfig{
     }
 
     public function loadAllActiveUsers(){
-        $apiKey = 'EA50B121-A98B-4A95-9700-D3FFEEAFB17F';
-        $sdpUrl = 'http://103.21.14.107:9004/api/v3/users';
-    
+        $apiKey = $this->getApiKey();
+        $listInfo = [
+            "list_info" => [
+                "sort_field" => "name",
+                "row_count" => 40,
+                "start_index" => 1
+            ]
+        ];
+
+        $jsonPayload = json_encode($listInfo);
+        $encodedURI = rawurlencode($jsonPayload);
+        $sdpUrl = $this->getSdpUrl() . '/users?input_data=' . $encodedURI;
+        
         $ch = curl_init($sdpUrl);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -206,8 +260,8 @@ class Ticket extends DbConfig{
     }
 
     public function loadAllActiveCategory(){
-        $apiKey = 'EA50B121-A98B-4A95-9700-D3FFEEAFB17F';
-        $sdpUrl = 'http://103.21.14.107:9004/api/v3/service_categories';
+        $apiKey = $this->getApiKey();
+        $sdpUrl = ($this->getSdpUrl()) . '/service_categories';
     
         $ch = curl_init($sdpUrl);
         curl_setopt_array($ch, [
@@ -259,38 +313,58 @@ class Ticket extends DbConfig{
         }
     } 
 
-    public function getTicketStatusFromSDP($ticketId) {
-        $apiKey = 'EA50B121-A98B-4A95-9700-D3FFEEAFB17F'; // Replace with your actual API Key
-        $sdpUrl = 'http://103.21.14.107:9004/api/v3/requests/'.$ticketId; // Adjust the URL based on your SDP API
+    public function getTicketStatusFromSDP() {
+        $conn = $this->db_connection();
+        $stmt = $conn->prepare("CALL gticket.sp_getTicketDetails(?)");
+        $stmt->bindParam(1, $this->data['id']);
+        $stmt->execute();
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        print_r($result);
+        exit();
+        if (!$result || !isset($result['id'])) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            return ['error' => 'Failed to retrieve data in database'];
+        }
+
+        $decoded = json_decode($result['data'], true);
+
+        if (!$decoded || !isset($decoded['control_number'])) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            return ['error' => 'Invalid data returned from stored procedure'];
+        }
+
+        $ticketId = $decoded['control_number'];
+
+        $apiKey = $this->getApiKey();
+        $sdpUrl = ($this->getSdpUrl()) . '/requests/'.$ticketId;
     
-        // Initialize cURL session
         $ch = curl_init($sdpUrl);
         
-        // Set cURL options
         curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,  // To return the response as a string
+            CURLOPT_RETURNTRANSFER => true, 
             CURLOPT_HTTPHEADER => [
-                'Authtoken: ' . $apiKey,  // API Key in the header
+                'Authtoken: ' . $apiKey,
                 'Content-Type: application/json'
             ]
         ]);
     
-        // Execute the cURL request
+
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
         curl_close($ch);
-    
-        // Check if the response is successful
+
         if ($httpCode >= 200 && $httpCode < 300) {
-            // Decode the JSON response from the API
+
             $ticketData = json_decode($response, true);
             
             if (isset($ticketData['request']['status'])) {
-                // Return the ticket status
+
                 return $ticketData['request']['status'];
             } else {
-                // Return error if status is not found in the response
                 return [
                     'error' => 'Status not found in the ticket data'
                 ];
@@ -304,6 +378,134 @@ class Ticket extends DbConfig{
             ];
         }
     }
-    
+
+    public function syncSDPSites($ipAddress = "UNKNOWN") {
+        $sdpSites = $this->fetchSitesFromSDP();
+
+        if (empty($sdpSites['data'])) {
+            error_log("syncSDPSites: No data fetched from SDP.");
+            return ['result' => 'Failure', 'message' => 'No data fetched'];
+        }
+
+        $conn = $this->db_connection();
+        $updatedCount = 0;
+
+        foreach ($sdpSites['data'] as $site) {
+            $siteId = $site['id'];
+            $siteName = $site['name'];
+
+            $stmt = $conn->prepare("SELECT sdp_site_name FROM tbl_sdp_sites WHERE sdp_id = :site_id");
+            $stmt->execute([':site_id' => $siteId]);
+            $existing = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($existing && $existing['sdp_site_name'] === $siteName) {
+                continue;
+            }
+
+            $this->insertSiteToDB($site);
+            $updatedCount++;
+        }
+
+        $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
+        $logStmt->execute([
+            ':count' => $updatedCount,
+            ':ipaddress' => $ipAddress
+        ]);
+
+        if ($updatedCount > 0) {
+            return [
+                'result' => 'Success',
+                'count' => $updatedCount
+            ];
+        } else {
+            return [
+                'result' => 'NoUpdate',
+                'count' => $updatedCount
+            ];
+        }
+    }
+
+
+    private function insertSiteToDB($site){
+        try {
+            $conn = $this->db_connection();
+            $stmt = $conn->prepare("REPLACE INTO tbl_sdp_sites (sdp_id, sdp_site_name) VALUES (:site_id, :site_name)");
+            $stmt->execute([
+                ':site_id' => $site['id'],
+                ':site_name' => $site['name']
+            ]);
+        } catch (\PDOException $e) {
+            error_log("❌ Failed to insert site: " . $site['id'] . " - " . $e->getMessage());
+        }
+    }
+
+    public function fetchSitesFromSDP(): array {
+        $apiKey = $this->getApiKey();
+
+        $listInfo = [
+            "list_info" => [
+                "sort_field" => "name",
+                "row_count" => 40,
+                "start_index" => 1
+            ]
+        ];
+
+        $jsonPayload = json_encode($listInfo);
+        $encodedURI = rawurlencode($jsonPayload);
+        $sdpUrl = $this->getSdpUrl() . '/sites?input_data=' . $encodedURI;
+
+        $headers = [
+            "TECHNICIAN_KEY: $apiKey",
+            "Accept: application/vnd.manageengine.sdp.v3+json"
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $sdpUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false || $httpCode !== 200) {
+            error_log("fetchSitesFromSDP: HTTP $httpCode response error");
+            return [];
+        }
+
+        $data = json_decode($response, true);
+        if (!isset($data['sites'])) {
+            return [];
+        }
+
+        $sites = $data['sites'];
+        $optionHtml = '';
+        foreach ($sites as $site) {
+            $id = htmlspecialchars($site['id'] ?? '');
+            $name = htmlspecialchars($site['name'] ?? '');
+            $optionHtml .= "<option value=\"$id\">$name</option>";
+        }
+
+        return [
+            'data' => $sites,
+            'option' => $optionHtml
+        ];
+    }
+
+    public function getSitesFromDB(): array {
+        $conn = $this->db_connection();
+        $stmt = $conn->query("SELECT sdp_id AS value, sdp_site_name AS label FROM tbl_sdp_sites ORDER BY sdp_site_name ASC");
+        $sites = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        $optionHtml = '';
+        foreach ($sites as $site) {
+            $optionHtml .= "<option value=\"{$site['value']}\">{$site['label']}</option>";
+        }
+
+        return [
+            'data' => $sites,
+            'option' => $optionHtml
+        ];
+    }
 
 }

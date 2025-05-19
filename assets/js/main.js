@@ -352,9 +352,6 @@ function sublink_hover(){
 function numberonly(evnt){ 
     var ASCIICode = (evnt.which) ? evnt.which : evnt.keyCode
     if (ASCIICode > 31 && (ASCIICode < 48 || ASCIICode > 57))return false;
-    // else 
-    //     $("#receiving_bay_number,#receivingAddedItemQty,#single_standard_noOf_pallets,#single_standard_qty_perPallet,#multi_standard_quantity,#multi_zero_quantity,#ordering_Order,#issuance_details_baynumber").removeClass('is-invalid');
-    //     return true;
 }
 // ==== RETURNS NUMBERS ONLY END ==== //
 
@@ -392,7 +389,7 @@ function getCurrentDate(){
 //normal toasters
 function toasts_info(message) {
     iziToast.info({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '2500'
@@ -404,7 +401,7 @@ function toasts_info(message) {
 
 function toasts_warning(message) {
     iziToast.warning({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '2500'
@@ -416,7 +413,7 @@ function toasts_warning(message) {
 
 function toasts_success(message) {
     iziToast.success({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '2500'
@@ -428,7 +425,7 @@ function toasts_success(message) {
 
 function toasts_error(message) {
     iziToast.error({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '2500'
@@ -444,7 +441,7 @@ function toasts_error(message) {
 //location reload toasters
 function toasts_info_reload(message) {
     iziToast.info({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '1500',
@@ -460,7 +457,7 @@ function toasts_info_reload(message) {
 
 function toasts_warning_reload(message) {
     iziToast.warning({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '1500',
@@ -475,7 +472,7 @@ function toasts_warning_reload(message) {
 
 function toasts_success_reload(message) {
     iziToast.success({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '1500',
@@ -490,7 +487,7 @@ function toasts_success_reload(message) {
 
 function toasts_error_reload(message) {
     iziToast.error({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '1500',
@@ -522,7 +519,7 @@ function toasts_session_error_reload(message) {
 function toasts_print_issuance(message) 
 {
     iziToast.success({
-        title: 'RMS Message',
+        title: 'GTicket Alert: ',
         message: message,
         position: 'topRight',
         timeout: '1500',
@@ -1120,7 +1117,121 @@ Swal.fire({
     cancelButtonText: 'Cancel'
 }).then((result) => {
     if (result.isConfirmed) {
-    confirmCallback(); // Call the passed function if confirmed
+    confirmCallback();
     }
 });
+}
+
+function showSyncSuccessAlert(siteCount) {
+    let timerInterval;
+    Swal.fire({
+        title: 'Sync Successful!',
+        html: `Fetched and updated <strong>${siteCount}</strong> site(s).<br><br>Closing in <b></b> seconds...`,
+        icon: 'success',
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: () => {
+            const timer = Swal.getPopup().querySelector("b");
+            timerInterval = setInterval(() => {
+                timer.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
+            }, 100);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+    }).then(() => {
+        loadAllWarehouses();
+    });
+}
+
+function showSyncNoUpdateAlert(siteCount) {
+    let timerInterval;
+    Swal.fire({
+        title: 'No Data Updated',
+        html: `<strong>${siteCount}</strong> site(s) unchanged, sync not required.<br><br>Closing in <b></b> seconds...`,
+        icon: 'info',
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: () => {
+            const timer = Swal.getPopup().querySelector("b");
+            timerInterval = setInterval(() => {
+                timer.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
+            }, 100);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+    }).then(() => {
+        loadAllWarehouses();
+    });
+}
+
+
+function showSuccessAlert(controlNumber) {
+    let timerInterval;
+    Swal.fire({
+        title: 'Success!',
+        html: `Your ticket has been submitted.<br><strong>Control Number:</strong> ${controlNumber}<br><br>Closing in <b></b> seconds...`,
+        icon: 'success',
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: () => {
+            const timer = Swal.getPopup().querySelector("b");
+            timerInterval = setInterval(() => {
+                timer.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
+            }, 100);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+    }).then(() => {
+        location.reload();
+    });
+}
+
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'Error',
+        html: `${message}`,
+        icon: 'error',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false
+    }).then(() => {
+        $('#activityconfirmationmodal').modal('show');
+    });
+}
+
+function showLoaderAlert(){
+    $('#activityconfirmationmodal').modal('hide');
+    Swal.fire({
+        title: 'Processing...',
+        text: 'Please wait while we submit your ticket.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+}
+
+function closeLoaderAlert() {
+    Swal.close();
+}
+
+function showErrorSyncAlert(title = 'Error', message = 'An unexpected error occurred.') {
+    Swal.fire({
+        title: title,
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false
+    });
 }

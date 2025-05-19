@@ -11,15 +11,37 @@ if(isset($_POST['function'])){
     $_POST['function']($param);
 }
 
-function addRecord($param){
-    $formData = $param['addRecordForm'] ?? [];
+
+function addRecord() {
+    $formData = $_POST;
+    $files = $_FILES;
+
+    $uploadDir = '../../assets/img/uploads/';
+    $uploadedFilePath = null;
+
+    if (isset($files['attachment']) && $files['attachment']['error'] === UPLOAD_ERR_OK) {
+        $tmpName = $files['attachment']['tmp_name'];
+        $originalName = basename($files['attachment']['name']);
+        $uploadedFilePath = $uploadDir . time() . '_' . $originalName;
+
+        if (!move_uploaded_file($tmpName, $uploadedFilePath)) {
+            echo json_encode(['error' => 'Failed to save uploaded file']);
+            return;
+        }
+    }
+
     $formData['ip_address'] = getClientIpAddress();
 
-    
-    $records = new Ticket($formData);
-    $result = $records->addNewTicketRecord();
+    $ticket = new Ticket($formData);
+    $result = $ticket->addNewTicketRecord($uploadedFilePath);
+
     echo json_encode($result);
+
+    if ($uploadedFilePath && file_exists($uploadedFilePath)) {
+        unlink($uploadedFilePath); 
+    }
 }
+
 
 function getClientIpAddress() {
     $ipKeys = [
@@ -47,6 +69,13 @@ function getClientIpAddress() {
     return 'UNKNOWN';
 }
 
+function syncWarehousestoLocalDB($param){
+    $records = new Ticket($param);
+    $ipAddress = getClientIpAddress();
+    $result = $records->syncSDPSites($ipAddress);
+    echo json_encode($result);
+}
+
 function loadAllWarehouses($param){
     $records = new Ticket($param);
     $result = $records->loadAllActiveWarehouses();
@@ -62,5 +91,11 @@ function loadAllUsers($param){
 function loadAllCategory($param){
     $records = new Ticket($param);
     $result = $records->loadAllActiveCategory();
+    echo json_encode($result);
+}
+
+function searchTicketByNumber($param){
+    $records = new Ticket($param);
+    $result = $records->getTicketStatusFromSDP();
     echo json_encode($result);
 }

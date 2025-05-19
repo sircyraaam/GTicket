@@ -18,17 +18,32 @@ function activityModalFilter(message,footer){
 }
 // ACTIVITY MODAL FILTER END //
 
+
 function SubmitRecord(event, id, type) {
     if (event) event.preventDefault();
 
-    const formDataArray = $(id).serializeArray();
-    addRecordForm = convert_form_data_to_object(formDataArray);
-    addRecordForm['ticket_type'] = type;
+      let formElement;
+    if (typeof id === 'string') {
+        formElement = document.querySelector(id);
+    } else if (id instanceof Element) {
+        formElement = id;
+    } else {
+        throw new Error('Invalid form identifier passed');
+    }
+    const formData = new FormData(formElement);
 
-    // Add dropdown display text for specific fields
-    addDropdownText(addRecordForm, ['userFullName', 'userSBU', 'userCategory']);
+    formData.set('ticket_type', type);
+    formData.set('function', 'addRecord');
+    addDropdownTextToFormData(formData, ['userFullName', 'userSBU', 'userCategory']);
 
-    console.log(addRecordForm);
+    const addRecordForm = {};
+    formData.forEach((value, key) => {
+        addRecordForm[key] = value;
+        console.log(`Key: ${key}, Value: ${value}`);
+    });
+
+
+    console.log(formData);
 
     const requiredFields = [
         { key: 'name', selector: '#userFullName', message: 'User Full Name is required.', checkValue: "0", isSelect2: true },
@@ -61,7 +76,8 @@ function SubmitRecord(event, id, type) {
         }
     }
 
-    // Show confirmation modal
+    window.ticketFormData = formData;
+
     activityModalFilter(
         "Do you want to add a new activity record for this Veteran?",
         `<button type="button" class="btn btn-danger btn-sm px-4" data-bs-dismiss="modal">Close</button>
@@ -69,40 +85,73 @@ function SubmitRecord(event, id, type) {
     );
 }
 
-// Helper function to add dropdown display text
-function addDropdownText(form, fields) {
+function addDropdownTextToFormData(formData, fields) {
     fields.forEach(field => {
-        form[`${field}_text`] = $(`#${field} option:selected`).text().trim();
+        const text = $(`#${field} option:selected`).text().trim();
+        formData.set(`${field}_text`, text);
     });
 }
 
-
-function activityModalSubmit(type,id){
-    switch(type){
+function activityModalSubmit(type) {
+    switch(type) {
         case 'addTicket':
-            console.log(addRecordForm);
+            if (!window.ticketFormData) {
+                toasts_error("Form data not found, please submit the form first.");
+                return;
+            }
+
+            showLoaderAlert();
+
             $.ajax({
                 type: "POST",
                 url: "app/Controller/ajax_ticket.php",
-                data: {
-                    function: 'addRecord',
-                    addRecordForm: addRecordForm
-                },
+                data: window.ticketFormData,
+                processData: false,
+                contentType: false,
                 dataType: 'json',
-                success: function (result) {
+                success: function(result) {
+                    closeLoaderAlert();
                     const thirdResult = result.result?.result;
-                    if (thirdResult == '1'){
-                        toasts_success("New Record Added Successfully.");
-                    }else{toasts_error("Failed to add new Record.");}
+                    if (thirdResult == '1') {
+                        showSuccessAlert(result.local_ticket_id);
+                    } else {
+                        closeLoaderAlert();
+                        showErrorAlert('Failed to Add New Record');
+                    }
                 },
-                error: function (xhr, status, error) {
-                    console.log(xhr, status, error);
+                error: function(xhr, status, error) {
+                    closeLoaderAlert();
                     console.error("Error during AJAX request:", error);
-                    toasts_error("An unexpected error occurred. Please try again.");
+                    showErrorAlert('An unexpected error occurred. Please try again.');
                 }
             });
-        break;
+            break;
     }
+}
+
+function syncWarehousestoLocalDB(){
+    $.ajax({
+        type: "POST",
+        url: "app/Controller/ajax_ticket.php",
+        data: {
+            function:'syncWarehousestoLocalDB'
+        },
+        dataType: 'json',
+        success: function(result){
+            console.log(result);
+            if (result.result === 'Success') {
+                showSyncSuccessAlert(result.count);
+            } else if(result.result === 'NoUpdate'){
+                showSyncNoUpdateAlert(result.count);
+            } else {
+                showErrorSyncAlert('Sync Failed', result.message + '. Could not complete the sync.');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Sync failed:', status, error);
+            showErrorSyncAlert('Sync Failed', 'Please try again to sync.');
+        }
+    });
 }
 
 function loadAllWarehouses(){
@@ -114,6 +163,7 @@ function loadAllWarehouses(){
         },
         dataType: 'json',
         success: function(result){
+            console.log(result);
             const {option} = result;
             $('#userSBU').html(`<option value="0">Select SBU</option>${option}`);
         }
@@ -169,6 +219,53 @@ function loadAllCategory() {
         error: function(xhr, status, error) {
             console.error("AJAX Error:", error);
             $('#userCategory').html('<option value="0">Error loading categories</option>');
+        }
+    });
+}
+
+function ticketResetField(){
+    $('#submit_ticket')[0].reset();
+    $('#userFullName').val('0').trigger('change');
+    $('#userSBU').val('0').trigger('change');
+}
+
+function searchTicketByNumber(){
+    var ticketnumber = $('#searchID').val();
+
+    if (ticketnumber == '' || ticketnumber == null){
+        $("#searchID").addClass('is-invalid').focus();
+        return false;
+    }else{
+        console.log(ticketnumber);
+        $.ajax({
+        type: "POST",
+        url: "app/Controller/ajax_ticket.php",
+        data: {
+            function:'sync_sdp_sites',
+            id: ticketnumber
+        },
+        dataType: 'json',
+        success: function(result){
+            console.log(result);
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX Error:", error);
+        }
+    });
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "app/Controller/ajax_ticket.php",
+        data: {
+            function:'searchTicketByNumber',
+            id: ticketnumber
+        },
+        dataType: 'json',
+        success: function(result){
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX Error:", error);
         }
     });
 }

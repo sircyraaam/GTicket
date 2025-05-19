@@ -49,6 +49,28 @@ include('./inc/header.inc.php');
                 </a>
             </div>
         </div>
+
+        <!-- <div class="row text-center">
+            <div class="col-lg-12">
+                <div class="form-floating mb-5 mt-5">
+                    <input type="text" class="form-control" id="search" oninput="maintenancesearch('consultants',this.value)" placeholder="name@example.com">
+                    <label for="search">Please provide your ticket number to view details</label>
+                </div>
+            </div>
+        </div> -->
+
+        <div class="row justify-content-center text-center mt-5 mb-5">
+            <div class="col-lg-6">
+                <div class="input-group form-floating shadow-sm">
+                    <span class="input-group-text bg-light fw-semibold">GTIX</span>
+                    <input type="text" class="form-control" id="searchID" placeholder="Enter your ticket number"aria-label="Ticket Number" autocomplete="off">
+                    <button class="btn btn-primary" type="button" onclick="searchTicketByNumber()" data-bs-toggle="tooltip" data-bs-placement="top" title="Search">
+                        <i class="bx bx-search-alt me-1"></i>
+                    </button>
+                </div>
+                <div class="form-text mt-2">Please provide your ticket number to view details</div>
+            </div>
+        </div>
     </div>
 </section>
 

@@ -823,3 +823,12 @@ body.dark .header-title {
     font-weight: 500;
     font-size: 1.5em;
 }
+
+.back-btn .icon {
+    color: #0d6efd;
+    transition: color 0.2s ease;
+}
+
+.back-btn:hover .icon {
+    color: white;
+}
