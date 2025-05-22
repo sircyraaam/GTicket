@@ -8,9 +8,8 @@
         </footer>
     </div>
 
-    
-    <!-- MODAL INCLUDES -->
-    <?php include('./inc/modal/modalloader.php')?>
+    <?php include('./inc/modal/modal_main.php'); ?>
+
     <!-- JQUERY CDN -->
     <script src="assets/node_modules/jquery/dist/jquery.min.js" ></script>
 

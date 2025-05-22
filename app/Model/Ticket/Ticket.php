@@ -196,12 +196,83 @@ class Ticket extends DbConfig{
         ];
     }
 
-    public function loadAllActiveUsers(){
+    public function syncUsertoDB($ipAddress = "UNKNOWN") {
+        $sdpUsers = $this->loadAllActiveUsers();
+
+        if (empty($sdpUsers['users'])) {
+            error_log("syncUsertoDB: No users fetched from SDP.");
+            return ['result' => 'Failure', 'message' => 'No users fetched'];
+        }
+
+        $conn = $this->db_connection();
+        $updatedCount = 0;
+
+        foreach ($sdpUsers['users'] as $user) {
+            $userId = $user['id'];
+            $userName = $user['name'];
+
+            $stmt = $conn->prepare("SELECT sdp_user_name FROM tbl_sdp_users WHERE sdp_id = :user_id");
+            $stmt->execute([':user_id' => $userId]);
+            $existing = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($existing && $existing['sdp_user_name'] === $userName) {
+                continue;
+            }
+
+            $this->insertUserToDB($user);
+            $updatedCount++;
+        }
+
+        $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
+        $logStmt->execute([
+            ':count' => "Fetched User Data from SDP API. User Record Updated: " . $updatedCount,
+            ':ipaddress' => $ipAddress
+        ]);
+
+        if ($updatedCount > 0) {
+            return [
+                'result' => 'Success',
+                'count' => $updatedCount
+            ];
+        } else {
+            return [
+                'result' => 'NoUpdate',
+                'count' => $updatedCount
+            ];
+        }
+    }
+
+    private function insertUserToDB($user){
+        try {
+            $conn = $this->db_connection();
+            $stmt = $conn->prepare("REPLACE INTO tbl_sdp_users (sdp_id, sdp_user_name) VALUES (:user_id, :user_name)");
+            $stmt->execute([
+                ':user_id' => $user['id'],
+                ':user_name' => $user['name']
+            ]);
+        } catch (\PDOException $e) {
+            error_log("❌ Failed to insert site: " . $user['id'] . " - " . $e->getMessage());
+        }
+    }
+
+    public function loadAllActiveUsersFromDB(){
+        $conn = $this->db_connection();
+        $stmt = $conn->prepare("call gticket.sp_getAllUsers()");
+        $stmt->execute();
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $option = ($result['option'] == NULL) ? '' : join('',json_decode($result['option']));
+        return [
+            'data' => ($result['data'] == NULL) ? [] : json_decode($result['data']),
+            'option' => $option
+        ];
+    }
+
+    public function loadAllActiveUsers(): array {
         $apiKey = $this->getApiKey();
         $listInfo = [
             "list_info" => [
                 "sort_field" => "name",
-                "row_count" => 40,
+                "row_count" => 1000,
                 "start_index" => 1
             ]
         ];
@@ -259,7 +330,78 @@ class Ticket extends DbConfig{
         }
     }
 
-    public function loadAllActiveCategory(){
+    public function syncCategorytoDB($ipAddress = "UNKNOWN") {
+        $sdpCategories = $this->loadAllActiveCategory();
+
+        if (empty($sdpCategories['categories'])) {
+            error_log("syncUsertoDB: No categories fetched from SDP.");
+            return ['result' => 'Failure', 'message' => 'No categories fetched'];
+        }
+
+        $conn = $this->db_connection();
+        $updatedCount = 0;
+
+        foreach ($sdpCategories['categories'] as $category) {
+            $categoryId = $category['id'];
+            $categoryName = $category['name'];
+
+            $stmt = $conn->prepare("SELECT sdp_categories FROM tbl_sdp_categories WHERE sdp_id = :category_id");
+            $stmt->execute([':category_id' => $categoryId]);
+            $existing = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($existing && $existing['sdp_categories'] === $categoryName) {
+                continue;
+            }
+
+            $this->insertCategoryToDB($category);
+            $updatedCount++;
+        }
+
+        $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
+        $logStmt->execute([
+            ':count' => "Fetched Category Data from SDP API. Category Record Updated: " . $updatedCount,
+            ':ipaddress' => $ipAddress
+        ]);
+
+        if ($updatedCount > 0) {
+            return [
+                'result' => 'Success',
+                'count' => $updatedCount
+            ];
+        } else {
+            return [
+                'result' => 'NoUpdate',
+                'count' => $updatedCount
+            ];
+        }
+    }
+
+    private function insertCategoryToDB($category){
+        try {
+            $conn = $this->db_connection();
+            $stmt = $conn->prepare("REPLACE INTO tbl_sdp_categories (sdp_id, sdp_categories) VALUES (:category_id, :category_name)");
+            $stmt->execute([
+                ':category_id' => $category['id'],
+                ':category_name' => $category['name']
+            ]);
+        } catch (\PDOException $e) {
+            error_log("❌ Failed to insert category: " . $category['id'] . " - " . $e->getMessage());
+        }
+    }
+
+    public function loadAllActiveWarehousesFromDB(){
+        $conn = $this->db_connection();
+        $stmt = $conn->prepare("call gticket.sp_getAllCategories()");
+        $stmt->execute();
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $option = ($result['option'] == NULL) ? '' : join('',json_decode($result['option']));
+        return [
+            'data' => ($result['data'] == NULL) ? [] : json_decode($result['data']),
+            'option' => $option
+        ];
+    }
+
+    public function loadAllActiveCategory(): array {
         $apiKey = $this->getApiKey();
         $sdpUrl = ($this->getSdpUrl()) . '/service_categories';
     
@@ -383,8 +525,8 @@ class Ticket extends DbConfig{
         $sdpSites = $this->fetchSitesFromSDP();
 
         if (empty($sdpSites['data'])) {
-            error_log("syncSDPSites: No data fetched from SDP.");
-            return ['result' => 'Failure', 'message' => 'No data fetched'];
+            error_log("syncSDPSites: No sites fetched from SDP.");
+            return ['result' => 'Failure', 'message' => 'No sites fetched'];
         }
 
         $conn = $this->db_connection();
@@ -408,7 +550,7 @@ class Ticket extends DbConfig{
 
         $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
         $logStmt->execute([
-            ':count' => $updatedCount,
+            ':count' => "Fetched Site Data from SDP API. Site Record Updated: " . $updatedCount,
             ':ipaddress' => $ipAddress
         ]);
 
@@ -424,7 +566,6 @@ class Ticket extends DbConfig{
             ];
         }
     }
-
 
     private function insertSiteToDB($site){
         try {

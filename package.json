@@ -2,5 +2,8 @@
   "dependencies": {
     "sweetalert2": "^11.21.1",
     "typed.js": "^2.1.0"
+  },
+  "scripts": {
+  "sass": "sass --watch assets/scss:assets/css"
   }
 }

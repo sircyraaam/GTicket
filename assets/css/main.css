@@ -40,94 +40,9 @@ body{
     padding-bottom: 50px;
 }
 
-body .wms-index{
-    position: relative;
-    background-image:url('../img/wms-index-bg.jpg');
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    width: 100vw;
-    height: 100vh;
-}
-
 @keyframes top {
     0%   {top:-1000px;}
     100%  {top:10px;}
-}
-
-.login-content-small .login-box-small{
-    margin-top: 130px !important;
-    position: relative;
-    margin: auto;
-    width:600px;
-    background-color: white;
-    border-radius: 5px;
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 10px;
-    padding:20px 40px;
-    animation-name: top;
-    animation-duration: 0.5s;
-}
-.login-box-small .small-logo{
-    position: relative;
-    text-align: center;
-    padding-bottom:50px;
-}
-.login-box-small .small-logo img{
-    width:70px;
-    height:70px;
-    margin-bottom: 20px;
-}
-.login-box-small .small-logo h2{
-    line-height: 15px;
-    color:#0d6efd;
-    font-size: 50px;
-    padding-bottom:10px;
-    text-shadow: 2px 2px rgba(0,0,0,0.8);
-}.login-box-small .small-logo label{
-    font-weight: 500;
-    text-shadow: 2px 2px rgba(0,0,0,0.3);
-    font-size: 32px;
-    padding:0px 5px;
-    border: 1px solid white;
-    border-radius: 2px;
-    color: white;
-    background-color: red;
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 2px 2px;
-}
-.login-box-small .icon{
-    background-color: #0d6efd;
-    border-bottom-left-radius: 5px;
-    border-top-left-radius: 5px;
-    height:100%;
-    padding:17px;
-    font-size: 25px;
-    color: white;
-}.login-box-small .label{
-    padding-left:75px;
-}
-#loginform-mobile .select2-container--default .select2-selection--single{
-    padding:20px 5px;
-    height: 55px;
-    width: 100%; 
-    font-size: 16px;  
-    background-color: var(--sidebar-color);
-    transition: var(--tran-03) !important;
-}
-
-
-::selection{
-    background-color: var(--primary-color);
-    color: #fff;
-}
-
-body.dark{
-    --body-color: #18191a;
-    --sidebar-color: #242526;
-    --primary-color: #5b5c5d;
-    --primary-color-light: #3a3b3c;
-    --toggle-color: #fff;
-    --text-color: #ccc;
-    --color:1;
 }
 
 header .image-text .name {
@@ -165,7 +80,6 @@ header .image-text .name {
     95% {background: linear-gradient(to right, var(--text-color) , var(--text-color));-webkit-background-clip: text;-webkit-text-fill-color: transparent;}
     100% {background: linear-gradient(to right, var(--text-color) , var(--text-color));-webkit-background-clip: text;-webkit-text-fill-color: transparent;}
 }
-
 
 
 header .image-text .profession{

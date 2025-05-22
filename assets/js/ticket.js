@@ -134,17 +134,32 @@ function syncWarehousestoLocalDB(){
         type: "POST",
         url: "app/Controller/ajax_ticket.php",
         data: {
-            function:'syncWarehousestoLocalDB'
+            function: 'syncWarehousestoLocalDB'
         },
         dataType: 'json',
         success: function(result){
             console.log(result);
-            if (result.result === 'Success') {
-                showSyncSuccessAlert(result.count);
-            } else if(result.result === 'NoUpdate'){
-                showSyncNoUpdateAlert(result.count);
+
+            const siteCount = result.site_sync?.count || 0;
+            const userCount = result.user_sync?.count || 0;
+            const categoryCount = result.category_sync?.count || 0;
+            const siteStatus = result.site_sync?.result;
+            const userStatus = result.user_sync?.result;
+            const categoryStatus = result.category_sync?.result;
+
+            const message = `<div class="text-align-center">
+                                <strong>Site Sync:</strong> ${siteCount} site(s) updated <br>
+                                <strong>User Sync:</strong> ${userCount} user(s) updated <br>
+                                <strong>Category Sync:</strong> ${categoryCount} user(s) updated
+                            </div>`;
+
+            if (siteCount > 0 || userCount > 0 || categoryCount > 0) {
+                showSyncSuccessAlert(message);
+            } else if (siteStatus === 'NoUpdate' && userStatus === 'NoUpdate' && categoryStatus === 'NoUpdate') {
+                showSyncNoUpdateAlert(message);
             } else {
-                showErrorSyncAlert('Sync Failed', result.message + '. Could not complete the sync.');
+                const msg = (result.site_sync?.message || '') + ' ' + (result.user_sync?.message || '') + ' ' + (result.category_sync?.message || '');
+                showErrorSyncAlert('Sync Failed', msg.trim());
             }
         },
         error: function(xhr, status, error) {
@@ -153,6 +168,7 @@ function syncWarehousestoLocalDB(){
         }
     });
 }
+
 
 function loadAllWarehouses(){
     $.ajax({
@@ -166,6 +182,9 @@ function loadAllWarehouses(){
             console.log(result);
             const {option} = result;
             $('#userSBU').html(`<option value="0">Select SBU</option>${option}`);
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX Error:", error);
         }
     });
 }
@@ -179,15 +198,9 @@ function loadAllUsers(){
         },
         dataType: 'json',
         success: function(result){
-            if (result.success && Array.isArray(result.users)) {
-                let options = '<option value="0">Select User</option>';
-                result.users.forEach(function(user) {
-                    options += `<option value="${user.id}">${user.name}</option>`;
-                });
-                $('#userFullName').html(options);
-            } else {
-                console.error("Unexpected response:", result);
-            }
+            console.log(result);
+            const {option} = result;
+            $('#userFullName').html(`<option value="0">Select User</option>${option}`);
         },
         error: function(xhr, status, error) {
             console.error("AJAX Error:", error);

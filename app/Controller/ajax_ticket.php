@@ -69,10 +69,20 @@ function getClientIpAddress() {
     return 'UNKNOWN';
 }
 
-function syncWarehousestoLocalDB($param){
+function syncWarehousestoLocalDB($param) {
     $records = new Ticket($param);
     $ipAddress = getClientIpAddress();
-    $result = $records->syncSDPSites($ipAddress);
+
+    $siteResult = $records->syncSDPSites($ipAddress);
+    $userResult = $records->syncUsertoDB($ipAddress);
+    $categoryResult = $records->syncCategorytoDB($ipAddress);
+
+    $result = [
+        'site_sync' => $siteResult,
+        'user_sync' => $userResult,
+        'category_sync' => $categoryResult
+    ];
+
     echo json_encode($result);
 }
 
@@ -84,7 +94,7 @@ function loadAllWarehouses($param){
 
 function loadAllUsers($param){
     $records = new Ticket($param);
-    $result = $records->loadAllActiveUsers();
+    $result = $records->loadAllActiveUsersFromDB();
     echo json_encode($result);
 }
 

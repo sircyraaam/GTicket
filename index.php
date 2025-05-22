@@ -3,6 +3,7 @@ include('./inc/header.inc.php');
 ?>
 
 <link rel="stylesheet" href="assets/css/index.css">
+<link rel="stylesheet" href="assets/css/style.css">
 <section id="home-section">
     <div class="container-fluid p-3">
 
@@ -17,21 +18,30 @@ include('./inc/header.inc.php');
             <div class="col-md-4 mb-2">
                 <a href="ticket_page.php?type=support" class="text-decoration-none text-dark">
                     <div class="card container-shadow py-3 h-100" id="support_ticket_id">
+                        <div class="left-border"></div>
+                        <div class="bottom-border"></div>
                         <div class="card-body">
                             <h5 class="card-title fw-semibold fs-4 header-title">Support Ticket</h5>
-                            <p class="card-text">For specific technical issue that was encountered by the user, prompting the need for a thorough investigation to ensure timely remediation</p>
+                            <p class="card-text">
+                                For specific technical issue that was encountered by the user, prompting the
+                                need for a thorough investigation to ensure timely remediation
+                            </p>
                         </div>
                     </div>
                 </a>
             </div>
 
             <!-- Request Ticket -->
-            <div class="col-md-4 mb-2">
-                <a href="ticket_page.php?type=request" class="text-decoration-none text-dark">
+                         <div class="col-md-4 mb-2">
+                <a href="ticket_page.php?type=support" class="text-decoration-none text-dark">
                     <div class="card container-shadow py-3 h-100" id="request_ticket_id">
+                        <div class="left-border"></div>
+                        <div class="bottom-border"></div>
                         <div class="card-body">
                             <h5 class="card-title fw-semibold fs-4 header-title">Request Ticket</h5>
-                            <p class="card-text">For users requesting something new</p>
+                            <p class="card-text">
+                                For users requesting something new
+                            </p>
                         </div>
                     </div>
                 </a>
@@ -39,8 +49,10 @@ include('./inc/header.inc.php');
 
             <!-- FAQ -->
             <div class="col-md-4 mb-2">
-                <a href="faq.html" class="text-decoration-none text-dark">
+                <a href="coming-soon.php" class="text-decoration-none text-dark">
                     <div class="card container-shadow py-3 h-100" id="faq_ticket_id">
+                        <div class="left-border"></div>
+                        <div class="bottom-border"></div>
                         <div class="card-body">
                             <h5 class="card-title fw-semibold fs-4 header-title">FAQ</h5>
                             <p class="card-text">Common Issues with defined solutions</p>
@@ -50,16 +62,7 @@ include('./inc/header.inc.php');
             </div>
         </div>
 
-        <!-- <div class="row text-center">
-            <div class="col-lg-12">
-                <div class="form-floating mb-5 mt-5">
-                    <input type="text" class="form-control" id="search" oninput="maintenancesearch('consultants',this.value)" placeholder="name@example.com">
-                    <label for="search">Please provide your ticket number to view details</label>
-                </div>
-            </div>
-        </div> -->
-
-        <div class="row justify-content-center text-center mt-5 mb-5">
+        <!-- <div class="row justify-content-center text-center mt-5 mb-5">
             <div class="col-lg-6">
                 <div class="input-group form-floating shadow-sm">
                     <span class="input-group-text bg-light fw-semibold">GTIX</span>
@@ -70,16 +73,13 @@ include('./inc/header.inc.php');
                 </div>
                 <div class="form-text mt-2">Please provide your ticket number to view details</div>
             </div>
-        </div>
+        </div> -->
     </div>
 </section>
 
 
-
-
 <?php
 include('./inc/footer.inc.php');
-include('./inc/modal/modal_main.php');
 ?>
 <script src="assets/js/ticket.js"></script>
 <script>

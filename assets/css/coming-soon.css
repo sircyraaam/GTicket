@@ -1,0 +1,157 @@
+body {
+  background: #111;
+  color: #fff;
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.coming-soon-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 90vw;
+  width: 100%;
+}
+
+.circle-progress {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 20px auto;
+  position: relative;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+circle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.bg {
+  stroke: #333;
+}
+
+.progress {
+  stroke: #00ffcc;
+  stroke-dasharray: 283; /* 2πr for r = 45 */
+  stroke-dashoffset: 283;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+text {
+  fill: #fff;
+  font-size: 1.2em;
+  font-weight: bold;
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+#countdown,
+#launch-message {
+  transition: opacity 1s ease;
+  font-size: 1.2em;
+  margin-top: 15px;
+}
+
+.show {
+  opacity: 1;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+h1.typing {
+  font-family: monospace;
+  font-size: 2em;
+  overflow: hidden;
+  border-right: 2px solid #00fff2;
+  white-space: nowrap;
+  width: 0;
+  margin-bottom: 20px;
+  animation: typing 2s steps(12) forwards, blink 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  to {
+    width: 12ch;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+/* Responsive Styling */
+@media (max-width: 600px) {
+  .circle-progress {
+    width: 100px;
+    height: 100px;
+  }
+
+  text {
+    font-size: 1em;
+  }
+
+  h1.typing {
+    font-size: 1.5em;
+  }
+
+  #launch-message,
+  #countdown {
+    font-size: 1em;
+  }
+}
+
+.blink-text {
+  animation: blinkText 1s step-start infinite;
+}
+
+@keyframes blinkText {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes typing {
+  to {
+    width: 12ch;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+.back-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #444;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+  background-color: #807b7b;
+}

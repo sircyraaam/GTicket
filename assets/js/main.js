@@ -1122,16 +1122,16 @@ Swal.fire({
 });
 }
 
-function showSyncSuccessAlert(siteCount) {
+function showSyncSuccessAlert(message) {
     let timerInterval;
     Swal.fire({
         title: 'Sync Successful!',
-        html: `Fetched and updated <strong>${siteCount}</strong> site(s).<br><br>Closing in <b></b> seconds...`,
+        html: `${message}<br><br>Closing in <b></b> seconds...`,
         icon: 'success',
         showConfirmButton: true,
         confirmButtonText: 'OK',
         allowOutsideClick: false,
-        timer: 3000,
+        timer: 5000,
         timerProgressBar: true,
         didOpen: () => {
             const timer = Swal.getPopup().querySelector("b");
@@ -1144,19 +1144,20 @@ function showSyncSuccessAlert(siteCount) {
         }
     }).then(() => {
         loadAllWarehouses();
+        loadAllUsers();
     });
 }
 
-function showSyncNoUpdateAlert(siteCount) {
+function showSyncNoUpdateAlert(message) {
     let timerInterval;
     Swal.fire({
         title: 'No Data Updated',
-        html: `<strong>${siteCount}</strong> site(s) unchanged, sync not required.<br><br>Closing in <b></b> seconds...`,
+        html: `${message}<br><br>Closing in <b></b> seconds...`,
         icon: 'info',
         showConfirmButton: true,
         confirmButtonText: 'OK',
         allowOutsideClick: false,
-        timer: 3000,
+        timer: 5000,
         timerProgressBar: true,
         didOpen: () => {
             const timer = Swal.getPopup().querySelector("b");
@@ -1169,9 +1170,9 @@ function showSyncNoUpdateAlert(siteCount) {
         }
     }).then(() => {
         loadAllWarehouses();
+        loadAllUsers();
     });
 }
-
 
 function showSuccessAlert(controlNumber) {
     let timerInterval;
@@ -1182,7 +1183,7 @@ function showSuccessAlert(controlNumber) {
         showConfirmButton: true,
         confirmButtonText: 'OK',
         allowOutsideClick: false,
-        timer: 3000,
+        timer: 10000,
         timerProgressBar: true,
         didOpen: () => {
             const timer = Swal.getPopup().querySelector("b");
