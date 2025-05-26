@@ -1,5 +1,7 @@
 var internetstatus;
-const secretKey = "W@rr10rsW3al7h2024";
+const secretKey = "G!7!IT@2025_t3chT3am";
+const hmacKey = "D3vT3@m2025_";
+
 
 //    //Disable f12
 $(document).keydown(function (event) {

@@ -273,13 +273,14 @@ function getTicketDetailsFromSession() {
     const data = JSON.parse(sessionStorage.getItem('ticketData'));
     if (!data) return;
 
+    $('#ticketCtrlNumberView').text((data.localTicketID) || '-');
     $('#ticketTypeView').text(toPascalCase(data.ticket_type) || '-');
     $('#ticketTitleView').text(data.title || '-');
     $('#ticketDescriptionView').text(data.description || '-');
     $('#userFullNameView').text(data.user_FullName || '-'); 
     $('#userEmailView').text(data.email || '-'); 
     $('#userContactView').text(data.contact || '-');
-    $('#userSBUView').text(data.sbu?.name || '-');
+    $('#userSBUView').text(data.warehouseName || '-');
     $('#userCategoryView').text(data.category_name || '-');
 
     const techName = data.technician?.name || 'No assigned Technician';
@@ -295,8 +296,8 @@ function getTicketDetailsFromSession() {
         .removeClass()
         .addClass(`bg-white text-white ${statusColorClass}`);
 
-    const createdAtRaw = data.created_time?.display_value || null;
-    const updatedAtRaw = data.last_updated_time?.display_value || null;
+    const createdAtRaw = data.created_time || null;
+    const updatedAtRaw = data.last_updated_time || null;
     $('#ticketCreatedAt').text(formatDate(createdAtRaw) || '-');
     $('#ticketUpdatedAt').text(formatDate(updatedAtRaw) || '-');
 
@@ -307,7 +308,7 @@ function getTicketDetailsFromSession() {
         $('#ticketAttachmentView').text('No attachment');
     }
 
-    $('#ticketID').val(data.trail_id || null);
+    $('#ticketID').val(data.hashCode || null);
 
 
     sessionStorage.removeItem('ticketData');
@@ -315,14 +316,13 @@ function getTicketDetailsFromSession() {
 
 function getStatusColorClass(hexColor) {
     switch ((hexColor || '').toLowerCase()) {
-        case '#28a745': return 'bg-success';
-        case '#ffc107': return 'bg-warning text-dark';
-        case '#dc3545':
-        case '#ff0000': return 'bg-danger';
-        case '#0066ff': return 'bg-primary';
-        case '#6c757d': return 'bg-secondary';
-        case '#A9A9A9': return 'bg-light text-dark';
-        default: return 'bg-info';
+        case '#003366': return 'bg-dark text-white';        // Assigned
+        case '#00ffcc': return 'bg-info text-dark';         // In Progress
+        case '#ff0000': return 'bg-danger';                 // Onhold
+        case '#0000ff': return 'bg-primary';                // Open
+        case '#006400': return 'bg-success text-white';     // Closed
+        case '#00ff66': return 'bg-success text-dark';      // Resolved
+        default: return 'bg-secondary text-white';          // Fallback
     }
 }
 
@@ -337,6 +337,7 @@ function formatDate(dateStr) {
 }
 
 function printTicket(id){
-    const url = "app/Controller/forms/service_ticket.php";
-    window.open(url, "_blank");
+    console.log(id);
+    const targetUrl = "app/Controller/forms/service_ticket.php?ticket=" + encodeURI(id);
+    window.open(targetUrl, "_blank");
 }

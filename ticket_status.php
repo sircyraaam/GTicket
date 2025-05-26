@@ -15,6 +15,10 @@
     </div>
 
     <div class="ticket-row">
+        <div class="ticket-label">Ticket Control Number:</div>
+        <div class="ticket-value" id="ticketCtrlNumberView">-</div>
+    </div>
+    <div class="ticket-row">
             <div class="ticket-label">Ticket Type:</div>
             <div class="ticket-value" id="ticketTypeView">-</div>
     </div>

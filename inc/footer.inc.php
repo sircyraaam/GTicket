@@ -12,6 +12,9 @@
 
     <!-- JQUERY CDN -->
     <script src="assets/node_modules/jquery/dist/jquery.min.js" ></script>
+    
+    <!-- CRYPTO JS SCRIPTS -->
+    <script src="assets/node_modules/cryptojs/crypto.js"></script>
 
     <!-- Bootstrap JS Scripts -->
     <script src="assets/node_modules/bootstrap-5.1.3/js/bootstrap.bundle.min.js" ></script>

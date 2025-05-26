@@ -48,7 +48,7 @@ class Ticket extends DbConfig{
             }
 
             $localTicketId = $decoded['control_number'];
-            $status_id = 1; // OPEN status ID
+            $status_id = "Open"; // OPEN status ID
 
             $apiKey = $this->getApiKey();
             $sdpUrl = ($this->getSdpUrl()) . '/requests';
@@ -63,7 +63,7 @@ class Ticket extends DbConfig{
                         "Ticket Details: \n\n" .
                         $this->data['description'],
                     'requester' => ['id' => $this->data['name']],
-                    'status' => ['id' => $status_id],
+                    'status' => ['name' => $status_id],
                     'service_category' => ['id' => $this->data['category']],
                     'site' => ['id' => $this->data['sbu']],
                 ]
@@ -149,7 +149,10 @@ class Ticket extends DbConfig{
                 }
             }
 
-            $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $technician = null;
+            $resolution = null;
+
+            $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             $stmtSdp->bindParam(1, $sdpId);
             $stmtSdp->bindParam(2, $localTicketId);
             $stmtSdp->bindParam(3, $this->data['name']);
@@ -166,6 +169,8 @@ class Ticket extends DbConfig{
             $stmtSdp->bindParam(14, $this->data['userSBU_text']);
             $stmtSdp->bindParam(15, $status_id);
             $stmtSdp->bindParam(16, $attachmentIdsJson);
+            $stmtSdp->bindParam(17, $technician);
+            $stmtSdp->bindParam(18, $resolution);
             $stmtSdp->execute();
             $resulttoAPI = $stmtSdp->fetch(\PDO::FETCH_ASSOC);
 
@@ -221,6 +226,7 @@ class Ticket extends DbConfig{
         foreach ($sdpUsers['users'] as $user) {
             $userId = $user['id'];
             $userName = $user['name'];
+            $userEmail = $user['email_id'];
 
             $stmt = $conn->prepare("SELECT sdp_user_name FROM tbl_sdp_users WHERE sdp_id = :user_id");
             $stmt->execute([':user_id' => $userId]);
@@ -256,10 +262,11 @@ class Ticket extends DbConfig{
     private function insertUserToDB($user){
         try {
             $conn = $this->db_connection();
-            $stmt = $conn->prepare("REPLACE INTO tbl_sdp_users (sdp_id, sdp_user_name) VALUES (:user_id, :user_name)");
+            $stmt = $conn->prepare("REPLACE INTO tbl_sdp_users (sdp_id, sdp_user_name, sdp_email) VALUES (:user_id, :user_name, :user_email)");
             $stmt->execute([
                 ':user_id' => $user['id'],
-                ':user_name' => $user['name']
+                ':user_name' => $user['name'],
+                ':user_email' => $user['email_id']
             ]);
         } catch (\PDOException $e) {
             error_log("❌ Failed to insert site: " . $user['id'] . " - " . $e->getMessage());
@@ -321,7 +328,8 @@ class Ticket extends DbConfig{
                 if (isset($user['id'], $user['name'])) {
                     $users[] = [
                         'id' => $user['id'],
-                        'name' => $user['name']
+                        'name' => $user['name'],
+                        'email_id' => $user['email_id']
                     ];
                 }
             }
@@ -527,6 +535,11 @@ class Ticket extends DbConfig{
                     $result['statusid'] = $status['id'] ?? null;
                     $result['statusname'] = $status['name'] ?? null;
                     $result['statuscolor'] = $status['color'] ?? null;
+                    $createdTime = $ticketData['request']['created_time']['display_value'] ?? null;
+                    $lastUpdatedTime = $ticketData['request']['last_updated_time']['display_value'] ?? null;
+
+                    $result['created_time'] = $createdTime;
+                    $result['last_updated_time'] = $lastUpdatedTime;
 
                     $technician = $ticketData['request']['technician'] ?? null;
                     if ($technician && is_array($technician)) {
@@ -561,7 +574,7 @@ class Ticket extends DbConfig{
 
                     $attachmentIdsJson = !empty($attachmentIds) ? json_encode($attachmentIds) : null;
 
-                    $updateStmt = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                    $updateStmt = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
                     $updateStmt->bindValue(1, $ticketId);
                     $updateStmt->bindValue(2, $result['localTicketID']);
@@ -572,18 +585,24 @@ class Ticket extends DbConfig{
                     $updateStmt->bindValue(7, $result['email'] ?? '');
                     $updateStmt->bindValue(8, $result['contact'] ?? '');
                     $updateStmt->bindValue(9, $ip);
-                    $updateStmt->bindValue(10, $result['resolution']['content'] ?? '');
+                    $updateStmt->bindValue(10, $result['remarks']?? '');
                     $updateStmt->bindValue(11, $result['category'] ?? 0, \PDO::PARAM_INT);
                     $updateStmt->bindValue(12, $result['category_name'] ?? '');
                     $updateStmt->bindValue(13, $result['user_FullName'] ?? '');
                     $updateStmt->bindValue(14, $result['warehouseName'] ?? '');
-                    $updateStmt->bindValue(15, $result['statusid'] ?? 0, \PDO::PARAM_INT);
+                    $updateStmt->bindValue(15, $result['statusname'] ?? 0, \PDO::PARAM_INT);
                     $updateStmt->bindValue(16, $attachmentIdsJson, is_null($attachmentIdsJson) ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+                    $updateStmt->bindValue(17, $result['technician']['name'] ?? '');
+                    $updateStmt->bindValue(18, $result['resolution']['content'] ?? '');
                     $updateStmt->execute();
                     $insertResult = $updateStmt->fetch(\PDO::FETCH_ASSOC);
                     $updateStmt->closeCursor();
                     $combinedResult = array_merge($result, [
-                        'trail_id' => $insertResult['trail_id'] ?? null
+                            'trail_id' => $insertResult['trail_id'] ?? null,
+                            'result' => $insertResult['result'] ?? null,
+                            'hashCode' => $insertResult['hashCode'] ?? null,
+                            'created_time' => $result['created_time'],
+                            'last_updated_time' => $result['last_updated_time']
                     ]);
 
                     return $combinedResult;
@@ -732,6 +751,32 @@ class Ticket extends DbConfig{
             'data' => $sites,
             'option' => $optionHtml
         ];
+    }
+
+    public function ViewAllTicketDetails(){
+        $ticketHash = $this->data['id'];
+        if (!$ticketHash) {
+            throw new \Exception("Missing ticket hash");
+        }
+
+        $conn = $this->db_connection();
+
+        $stmt = $conn->prepare("CALL gticket.sp_getAlldetailsforTicketPrint(?)");
+        $stmt->bindParam(1, $ticketHash);
+        $stmt->execute();
+
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $stmt->closeCursor();
+        if (isset($result['data']) && !empty($result['data'])) {
+            $decodedData = json_decode($result['data'], true);
+            if (json_last_error() == JSON_ERROR_NONE) {
+                return ['data' => $decodedData];
+            } else {
+                return ['data' => []];
+            }
+        } else {
+            return ['data' => []];
+        }
     }
 
 }
