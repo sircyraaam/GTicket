@@ -40,3 +40,136 @@
     right:0;
     padding: 6px 10px !important;
 }
+
+/* TICKET STATUS  */
+
+#ticket_status_section {
+    font-family: 'Courier New', Courier, monospace;
+    max-width: 770px;
+    margin: 2rem auto;
+    background: #fff;
+    padding: 2rem;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    border-radius: 6px;
+}
+
+#ticket_status_section h2 {
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    color: #333;
+    border-bottom: 2px solid #0066ff;
+    padding-bottom: 0.5rem;
+}
+
+#ticketStatusText {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 700;
+    font-size: 1.3rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #fff;
+    margin: 1.5rem auto;
+    min-width: 140px;
+    text-align: center;
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+}
+
+.ticket-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.7rem;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 0.3rem;
+}
+
+.ticket-label {
+    font-weight: 600;
+    color: #555;
+    max-width: 45%;
+}
+
+.ticket-value {
+    text-align: right;
+    color: #222;
+    max-width: 55%;
+    word-wrap: break-word;
+}
+
+#ticketAttachmentPreview {
+    margin-top: 1.2rem;
+    border-top: 1px dashed #ccc;
+    padding-top: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Status colors */
+.bg-success { background-color: #28a745 !important; }
+.bg-warning { background-color: #ffc107 !important; color: #212529 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+.bg-primary { background-color: #0066ff !important; }
+.bg-secondary { background-color: #6c757d !important; }
+.bg-info { background-color: #17a2b8 !important; }
+
+/* Timestamps style */
+#timestamps {
+    font-size: 0.85rem;
+    color: #888;
+    margin: 1rem 0 1.5rem 0;
+    border-top: 1px dotted #bbb;
+    border-bottom: 1px dotted #bbb;
+    padding: 0.5rem 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* PRINT STYLES */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+        margin: 0;
+        padding-top: 0;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    #ticket_status_section {
+        box-shadow: none !important;
+        border: none !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .back-btn {
+        display: none !important;
+    }
+
+    #ticketStatusText {
+        box-shadow: none !important;
+        font-size: 1.2rem !important;
+    }
+
+    .ticket-row {
+        border-bottom: 1px solid #000 !important;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    #ticketAttachmentPreview a {
+        color: black !important;
+        text-decoration: underline !important;
+    }
+
+    /* Hide any interactive elements (if any) */
+    input, select, button {
+        display: none !important;
+    }
+}

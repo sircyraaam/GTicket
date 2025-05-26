@@ -141,7 +141,7 @@ setInterval(function(){
         timer = 0;
     }else{
         if(timer == 600){
-            main_ModalFilter(`It's been a long time since you don't see me, click 'Ok' if you want to LOGOUT.`,`<button type="button" class="btn btn-outline-danger btn-sm px-4" data-bs-dismiss="modal" onclick="main_ModalSubmit(\'cancellogout\')" >Cancel</button><button type="button" class="btn btn-outline-primary btn-sm px-4" onclick="main_ModalSubmit(\'logout\')" value="">Ok</button>`);
+            main_ModalFilter(`It's been a long time since you don't see me, click 'Ok' if you want to REFRESH the page.`,`<button type="button" class="btn btn-outline-danger btn-sm px-4" data-bs-dismiss="modal" onclick="main_ModalSubmit(\'cancellogout\')" >Cancel</button><button type="button" class="btn btn-outline-primary btn-sm px-4" onclick="main_ModalSubmit(\'refresh\')" value="">Ok</button>`);
             timer = 0;
         }
     }
@@ -1211,11 +1211,21 @@ function showErrorAlert(message) {
     });
 }
 
+function showErrorAlertinSearch(message) {
+    Swal.fire({
+        title: 'Error',
+        html: `${message}`,
+        icon: 'error',
+        confirmButtonText: 'OK',
+        allowOutsideClick: false
+    })
+}
+
 function showLoaderAlert(){
     $('#activityconfirmationmodal').modal('hide');
     Swal.fire({
         title: 'Processing...',
-        text: 'Please wait while we submit your ticket.',
+        text: 'Please wait while we submit your data.',
         allowOutsideClick: false,
         didOpen: () => {
             Swal.showLoading();
@@ -1223,7 +1233,7 @@ function showLoaderAlert(){
     });
 }
 
-function closeLoaderAlert() {
+function closeLoaderAlert(){
     Swal.close();
 }
 
@@ -1235,4 +1245,27 @@ function showErrorSyncAlert(title = 'Error', message = 'An unexpected error occu
         confirmButtonText: 'OK',
         allowOutsideClick: false
     });
+}
+
+function customLoader() {
+    Swal.fire({
+        title: 'Processing...',
+         html: `
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <img src="assets/img/loader.gif" alt="Loading..." style="width: 350px; height: 100px;" />
+                    <p>Please wait while we process your request.</p>
+                </div>
+            `,
+        showConfirmButton: false,
+        allowOutsideClick: false
+    });
+}
+
+function toPascalCase(str) {
+    if (!str) return '';
+    return str
+        .replace(/[_\- ]+/g, ' ')
+        .toLowerCase()
+        .replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1))
+        .replace(/\s+/g, '');
 }

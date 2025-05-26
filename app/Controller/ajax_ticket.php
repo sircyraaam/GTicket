@@ -100,12 +100,13 @@ function loadAllUsers($param){
 
 function loadAllCategory($param){
     $records = new Ticket($param);
-    $result = $records->loadAllActiveCategory();
+    $result = $records->loadAllActiveCategoryFromDB();
     echo json_encode($result);
 }
 
 function searchTicketByNumber($param){
     $records = new Ticket($param);
-    $result = $records->getTicketStatusFromSDP();
+    $ipAddress = getClientIpAddress();
+    $result = $records->getTicketStatusByNumber($ipAddress);
     echo json_encode($result);
 }

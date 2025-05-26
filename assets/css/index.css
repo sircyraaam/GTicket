@@ -28,13 +28,13 @@
 }
   
 @keyframes rgbColor {
-    0%   { color: #000000; }
-    16%  { color: #083759; }
-    33%  { color: #602e03; }
-    50%  { color: #FF9149; }
-    66%  { color: #056076; }
-    83%  { color: #144325; }
-    100% { color: #50511d; }
+    0%   { color: #4D4C7D; }
+    16%  { color: #2c435a; }
+    33%  { color: #22413c; }
+    50%  { color: #455850; }
+    66%  { color: #3e3557; }
+    83%  { color: #573346; }
+    100% { color: #222164; }
 }
 
 .typed-cursor {

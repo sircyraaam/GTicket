@@ -218,20 +218,11 @@ function loadAllCategory() {
         dataType: 'json',
         success: function(result) {
             console.log(result);
-            if (result.success && Array.isArray(result.categories)) {
-                let options = '<option value="0">Select Category</option>';
-                result.categories.forEach(function(category) {
-                    options += `<option value="${category.id}">${category.name}</option>`;
-                });
-                $('#userCategory').html(options);
-            } else {
-                console.error("Unexpected response format:", result);
-                $('#userCategory').html('<option value="0">No categories available</option>');
-            }
+            const {option} = result;
+            $('#userCategory').html(`<option value="0">Select Category</option>${option}`);
         },
         error: function(xhr, status, error) {
             console.error("AJAX Error:", error);
-            $('#userCategory').html('<option value="0">Error loading categories</option>');
         }
     });
 }
@@ -250,24 +241,8 @@ function searchTicketByNumber(){
         return false;
     }else{
         console.log(ticketnumber);
+        customLoader();
         $.ajax({
-        type: "POST",
-        url: "app/Controller/ajax_ticket.php",
-        data: {
-            function:'sync_sdp_sites',
-            id: ticketnumber
-        },
-        dataType: 'json',
-        success: function(result){
-            console.log(result);
-        },
-        error: function(xhr, status, error) {
-            console.error("AJAX Error:", error);
-        }
-    });
-    }
-
-    $.ajax({
         type: "POST",
         url: "app/Controller/ajax_ticket.php",
         data: {
@@ -276,9 +251,92 @@ function searchTicketByNumber(){
         },
         dataType: 'json',
         success: function(result){
+            console.log(result);
+             if (result && result.serviceID) {
+                closeLoaderAlert();
+                sessionStorage.setItem('ticketData', JSON.stringify(result));
+                window.location.href = 'ticket_status.php';
+            } else {
+                closeLoaderAlert();
+                showErrorAlertinSearch(result.error);
+            }
         },
         error: function(xhr, status, error) {
-            console.error("AJAX Error:", error);
-        }
+            closeLoaderAlert();
+            console.log(xhr.responseJSON.error);
+            showErrorAlertinSearch("("+  error + ") "+ xhr.responseJSON.error);        }
     });
+    }
+}
+
+function getTicketDetailsFromSession() {
+    const data = JSON.parse(sessionStorage.getItem('ticketData'));
+    if (!data) return;
+
+    $('#ticketTypeView').text(toPascalCase(data.ticket_type) || '-');
+    $('#ticketTitleView').text(data.title || '-');
+    $('#ticketDescriptionView').text(data.description || '-');
+    $('#userFullNameView').text(data.user_FullName || '-'); 
+    $('#userEmailView').text(data.email || '-'); 
+    $('#userContactView').text(data.contact || '-');
+    $('#userSBUView').text(data.sbu?.name || '-');
+    $('#userCategoryView').text(data.category_name || '-');
+
+    const techName = data.technician?.name || 'No assigned Technician';
+    $('#ticketTechnicianView').text(techName);
+
+    const resolutionContent = data.resolution?.content || 'No resolution yet';
+    $('#ticketResolutionView').text(resolutionContent);
+
+    const statusName = data.statusname || 'Unknown'; 
+    const statusColorClass = getStatusColorClass(data.statuscolor); 
+    $('#ticketStatusText')
+        .text(statusName)
+        .removeClass()
+        .addClass(`bg-white text-white ${statusColorClass}`);
+
+    const createdAtRaw = data.created_time?.display_value || null;
+    const updatedAtRaw = data.last_updated_time?.display_value || null;
+    $('#ticketCreatedAt').text(formatDate(createdAtRaw) || '-');
+    $('#ticketUpdatedAt').text(formatDate(updatedAtRaw) || '-');
+
+    const attachment = data.attachments;
+    if (attachment) {
+        $('#ticketAttachmentView').text(attachment);
+    } else {
+        $('#ticketAttachmentView').text('No attachment');
+    }
+
+    $('#ticketID').val(data.trail_id || null);
+
+
+    sessionStorage.removeItem('ticketData');
+}
+
+function getStatusColorClass(hexColor) {
+    switch ((hexColor || '').toLowerCase()) {
+        case '#28a745': return 'bg-success';
+        case '#ffc107': return 'bg-warning text-dark';
+        case '#dc3545':
+        case '#ff0000': return 'bg-danger';
+        case '#0066ff': return 'bg-primary';
+        case '#6c757d': return 'bg-secondary';
+        case '#A9A9A9': return 'bg-light text-dark';
+        default: return 'bg-info';
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    if (isNaN(date)) return null;
+
+    // Format example: May 23, 2025 14:35
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+    return date.toLocaleString(undefined, options);
+}
+
+function printTicket(id){
+    const url = "app/Controller/forms/service_ticket.php";
+    window.open(url, "_blank");
 }

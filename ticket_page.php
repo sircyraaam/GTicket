@@ -6,6 +6,7 @@ $ticketTitle = ($type === 'request') ? 'Submit Request Ticket' : 'Submit Support
 ?>
 
 <link rel="stylesheet" href="assets/css/ticket.css">
+<link rel="stylesheet" href="assets/css/style.css">
 <section id="submit_ticket_section">
     <div class="container-fluid p-3">
         <div class="card container-shadow py-3 mb-2">
@@ -39,7 +40,7 @@ $ticketTitle = ($type === 'request') ? 'Submit Request Ticket' : 'Submit Support
                                 </select>
                                 <label for="userSBU"><span class="text-danger">*</span>SBU:</label>
                             </div>
-                            <button id="syncBtn" class="btn btn-primary" type="button" onclick="syncWarehousestoLocalDB()" data-bs-toggle="tooltip" data-bs-placement="top" title="Sync if you can't find your designated sbu"><i class='bx bx-sync'></i></button>
+                            <button id="syncBtn" class="btn btn-primary" type="button" onclick="syncWarehousestoLocalDB()" data-bs-toggle="tooltip" data-bs-placement="top" title="Sync if you can't find your Name, designated SBU or Category"><i class='bx bx-sync'></i></button>
                         </div>
                         <div class="col-lg-4">
                             <div class="form-floating">

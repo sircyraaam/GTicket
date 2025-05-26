@@ -1,4 +1,18 @@
-#support_ticket_id, #request_ticket_id, #faq_ticket_id {
+@keyframes pulseGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+#support_ticket_id,
+#request_ticket_id,
+#faq_ticket_id {
   position: relative;
   border-radius: 8px;
   padding: 20px;
@@ -9,6 +23,15 @@
   box-sizing: border-box;
   will-change: transform, box-shadow;
 
+  .ticket-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: black; // default
+    transition: all 0.3s ease;
+  }
+
   // Top and Right borders (pseudo-elements)
   &::before,
   &::after {
@@ -18,10 +41,9 @@
     transition: all 0.3s ease;
     z-index: 1;
     pointer-events: none;
-    background: linear-gradient(to right, #3bc6f4, #b639ff);
+    background: linear-gradient(to right, #0D92F4, #77CDFF, #F95454, #C62E2E);
   }
 
-  // Top border
   &::before {
     top: 0;
     left: 0;
@@ -29,16 +51,14 @@
     width: 0;
   }
 
-  // Right border
   &::after {
     top: 0;
     right: 0;
     width: 2px;
     height: 0;
-    background: linear-gradient(to bottom, #3bc6f4, #b639ff);
+    background: linear-gradient(to bottom, #0D92F4, #77CDFF, #F95454, #C62E2E);
   }
 
-  // Left and Bottom borders (helper divs)
   .left-border,
   .bottom-border {
     position: absolute;
@@ -53,7 +73,7 @@
     left: 0;
     width: 2px;
     height: 0;
-    background: linear-gradient(to top, #b639ff, #3bc6f4);
+    background: linear-gradient(to top,  #0D92F4, #77CDFF, #F95454, #C62E2E);
   }
 
   .bottom-border {
@@ -61,11 +81,12 @@
     right: 0;
     height: 2px;
     width: 0;
-    background: linear-gradient(to left, #3bc6f4, #b639ff);
+    background: linear-gradient(to left,  #0D92F4, #77CDFF, #F95454, #C62E2E);
   }
 
-  // Hover effect
-  &:hover {
+  // Hover or focus effects
+  &:hover,
+  &:focus-within {
     transform: scale(1.02);
     box-shadow: 0 0 15px rgba(8, 75, 181, 0.7);
 
@@ -88,14 +109,27 @@
       width: 100%;
       opacity: 1;
     }
+
+    .ticket-title {
+      background: linear-gradient(270deg, #0D92F4, #77CDFF, #F95454, #C62E2E);
+      background-size: 400% 400%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      animation: pulseGradient 3s ease infinite;
+    }
   }
 
-  // Responsive
   @media screen and (max-width: 768px) {
     padding: 1rem;
 
     .card-body {
       font-size: 0.95rem;
+    }
+
+    .ticket-title {
+      font-size: 1.3rem;
     }
   }
 
@@ -104,6 +138,10 @@
 
     .card-body {
       font-size: 0.9rem;
+    }
+
+    .ticket-title {
+      font-size: 1.1rem;
     }
   }
 }

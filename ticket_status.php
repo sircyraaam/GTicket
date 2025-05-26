@@ -1,110 +1,115 @@
-<?php
-include('./inc/header.inc.php');
-?>
+<?php include('./inc/header.inc.php'); ?>
 
 <link rel="stylesheet" href="assets/css/ticket.css">
-<section id="ticket_status_section">
-    <div class="container-fluid p-3">
-        <div class="card container-shadow py-3 mb-2">
-            <div class="d-flex justify-content-between align-items-center px-3">
-                <span class="fw-semibold fs-4 header-title" id="ticket_status_header">
-                    View Ticket Status
-                </span>
-                <a href="index.php" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm rounded-3 px-3 py-2 text-decoration-none back-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Back">
-                    <i class='bx bx-left-arrow-circle fs-5 icon'></i>
-                </a>
-            </div>
-        </div>
 
-        <div class="tab-pane fade show active" id="item_details" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
-            <div class="p-2 border rounded shadow-sm mt-3">
-                    <div class="row pt-4 g-3">
-                        <div class="col-lg-6">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="ticketTypeView" name="type" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="ticketTypeView">Ticket Type:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="ticketStatusView" name="status" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="ticketStatusView">Status:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="form-floating">
-                                <select class="form-select" id="userFullNameView" name="name" style="width:100%" aria-label="Floating label select example" disabled>
-                                    <option value="0" selected>Select User</option>
-                                </select>
-                                <label for="userFullNameView"><span class="text-danger">*</span>User Full Name:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="form-floating">
-                                <select class="form-select" id="userSBUView" name="sbu" style="width:100%" aria-label="Floating label select example" disabled>
-                                    <option value="0" selected>Select SBU</option>
-                                </select>
-                                <label for="userSBUView"><span class="text-danger">*</span>SBU:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="form-floating">
-                                <input type="email" class="form-control" id="userEmailView" name="email" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="userEmailView"><span class="text-danger">*</span>User Email:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="userContactView" name="contact" placeholder="name@example.com" autocomplete="off" maxlength="11" pattern="\d{11}" oninput="this.setCustomValidity(''); this.value = this.value.replace(/\D/g, '')" oninvalid="this.setCustomValidity('Contact number must be exactly 11 digits.')" disabled>
-                                <label for="userContactView"><span class="text-danger">*</span>User Contact No.:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="form-floating">
-                                <select class="form-select" id="userCategoryView" name="category" style="width:100%" aria-label="Floating label select example" disabled>
-                                    <option value="0" selected>Select Category</option>
-                                </select>
-                                <label for="userCategoryView"><span class="text-danger"></span>Category:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-12">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="ticketTitleView" name="title" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="ticketTitleView"><span class="text-danger">*</span>Title / Subject:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-12">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="ticketDescriptionView" name="description" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="ticketDescriptionView"><span class="text-danger">*</span>Description:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-12">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="ticketAttachmentView" name="attachment" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="ticketAttachmentView"><span class="text-danger">*</span>Attachment:</label>
-                            </div>
-                        </div>
-                        <div class="col-lg-12">
-                            <div class="form-floating">
-                                <input type="text" class="form-control" id="ticketRemarksView" name="remarks" placeholder="name@example.com" autocomplete="off" disabled>
-                                <label for="ticketRemarksView">Remarks:</label>
-                            </div>
-                        </div>
-                    </div>
-                    <hr class="mt-3">
-            </div>
-        </div>
+<section id="ticket_status_section">
+    <h2 class="text-center mb-3">Service Ticket Copy</h2>
+
+    <div class="text-center mb-3">
+        <span id="ticketStatusText" class="bg-info">Loading...</span>
     </div>
 
+    <div id="timestamps" class="text-center mb-4">
+        <div>Created: <span id="ticketCreatedAt">-</span></div>
+        <div>Last Updated: <span id="ticketUpdatedAt">-</span></div>
+    </div>
+
+    <div class="ticket-row">
+            <div class="ticket-label">Ticket Type:</div>
+            <div class="ticket-value" id="ticketTypeView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">User Full Name:</div>
+        <div class="ticket-value" id="userFullNameView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">SBU:</div>
+        <div class="ticket-value" id="userSBUView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Category:</div>
+        <div class="ticket-value" id="userCategoryView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">User Email:</div>
+        <div class="ticket-value" id="userEmailView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">User Contact No.:</div>
+        <div class="ticket-value" id="userContactView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Title / Subject:</div>
+        <div class="ticket-value" id="ticketTitleView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Description:</div>
+        <div class="ticket-value" id="ticketDescriptionView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Attachment:</div>
+        <div class="ticket-value" id="ticketAttachmentView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Remarks:</div>
+        <div class="ticket-value" id="ticketRemarksView">-</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Technician:</div>
+        <div class="ticket-value" id="ticketTechnicianView">No assigned Technician</div>
+    </div>
+    <div class="ticket-row">
+        <div class="ticket-label">Resolution:</div>
+        <div class="ticket-value" id="ticketResolutionView">No resolution yet</div>
+    </div>
+    <div class="print-btn text-center mt-4">
+        <button id="ticketID" onclick="printTicket(this.value)" class="btn btn-outline-primary">Print Ticket</button>
+        <a href="index.php" class="btn btn-outline-secondary">Back to Mainpage</a>
+    </div>
 </section>
 
 <?php
 include('./inc/footer.inc.php');
 include('./inc/modal/modal_main.php');
 ?>
+
 <script src="assets/js/ticket.js"></script>
 <script>
-    $(document).ready(function(){
+    $(document).ready(function () {
+        getTicketDetailsFromSession();
+
+        $('a').on('click', function (e) {
+        const href = $(this).attr('href');
+
+        if (!href || href === '#' || href.startsWith('javascript:') || $(this).attr('target')) {
+            return;
+        }
+
+        e.preventDefault();
+
+            Swal.fire({
+                title: 'Leave this page?',
+                html: `
+                        <p>This page is loaded based on <strong>temporary session data</strong>.
+                        If you <strong>refresh</strong> or <strong>navigate away</strong>, the ticket information will be <span style="color: red;"><strong>lost</strong></span>.</p>
+                        <p>Are you sure you want to leave?</p>
+                    `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Leave Page',
+                cancelButtonText: 'Stay Here',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#3085d6'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = href;
+                }
+            });
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            e.preventDefault();
+            e.returnValue = '';
+        });
     });
 </script>

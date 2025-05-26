@@ -1,4 +1,17 @@
-#support_ticket_id, #request_ticket_id, #faq_ticket_id {
+@keyframes pulseGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+#support_ticket_id,
+#request_ticket_id,
+#faq_ticket_id {
   position: relative;
   border-radius: 8px;
   padding: 20px;
@@ -9,31 +22,51 @@
   box-sizing: border-box;
   will-change: transform, box-shadow;
 }
-#support_ticket_id::before, #support_ticket_id::after, #request_ticket_id::before, #request_ticket_id::after, #faq_ticket_id::before, #faq_ticket_id::after {
+#support_ticket_id .ticket-title,
+#request_ticket_id .ticket-title,
+#faq_ticket_id .ticket-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: black;
+  transition: all 0.3s ease;
+}
+#support_ticket_id::before, #support_ticket_id::after,
+#request_ticket_id::before,
+#request_ticket_id::after,
+#faq_ticket_id::before,
+#faq_ticket_id::after {
   content: "";
   position: absolute;
   opacity: 0;
   transition: all 0.3s ease;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(to right, #3bc6f4, #b639ff);
+  background: linear-gradient(to right, #0D92F4, #77CDFF, #F95454, #C62E2E);
 }
-#support_ticket_id::before, #request_ticket_id::before, #faq_ticket_id::before {
+#support_ticket_id::before,
+#request_ticket_id::before,
+#faq_ticket_id::before {
   top: 0;
   left: 0;
   height: 2px;
   width: 0;
 }
-#support_ticket_id::after, #request_ticket_id::after, #faq_ticket_id::after {
+#support_ticket_id::after,
+#request_ticket_id::after,
+#faq_ticket_id::after {
   top: 0;
   right: 0;
   width: 2px;
   height: 0;
-  background: linear-gradient(to bottom, #3bc6f4, #b639ff);
+  background: linear-gradient(to bottom, #0D92F4, #77CDFF, #F95454, #C62E2E);
 }
 #support_ticket_id .left-border,
-#support_ticket_id .bottom-border, #request_ticket_id .left-border,
-#request_ticket_id .bottom-border, #faq_ticket_id .left-border,
+#support_ticket_id .bottom-border,
+#request_ticket_id .left-border,
+#request_ticket_id .bottom-border,
+#faq_ticket_id .left-border,
 #faq_ticket_id .bottom-border {
   position: absolute;
   opacity: 0;
@@ -41,54 +74,109 @@
   z-index: 1;
   pointer-events: none;
 }
-#support_ticket_id .left-border, #request_ticket_id .left-border, #faq_ticket_id .left-border {
+#support_ticket_id .left-border,
+#request_ticket_id .left-border,
+#faq_ticket_id .left-border {
   bottom: 0;
   left: 0;
   width: 2px;
   height: 0;
-  background: linear-gradient(to top, #b639ff, #3bc6f4);
+  background: linear-gradient(to top, #0D92F4, #77CDFF, #F95454, #C62E2E);
 }
-#support_ticket_id .bottom-border, #request_ticket_id .bottom-border, #faq_ticket_id .bottom-border {
+#support_ticket_id .bottom-border,
+#request_ticket_id .bottom-border,
+#faq_ticket_id .bottom-border {
   bottom: 0;
   right: 0;
   height: 2px;
   width: 0;
-  background: linear-gradient(to left, #3bc6f4, #b639ff);
+  background: linear-gradient(to left, #0D92F4, #77CDFF, #F95454, #C62E2E);
 }
-#support_ticket_id:hover, #request_ticket_id:hover, #faq_ticket_id:hover {
+#support_ticket_id:hover, #support_ticket_id:focus-within,
+#request_ticket_id:hover,
+#request_ticket_id:focus-within,
+#faq_ticket_id:hover,
+#faq_ticket_id:focus-within {
   transform: scale(1.02);
   box-shadow: 0 0 15px rgba(8, 75, 181, 0.7);
 }
-#support_ticket_id:hover::before, #request_ticket_id:hover::before, #faq_ticket_id:hover::before {
+#support_ticket_id:hover::before, #support_ticket_id:focus-within::before,
+#request_ticket_id:hover::before,
+#request_ticket_id:focus-within::before,
+#faq_ticket_id:hover::before,
+#faq_ticket_id:focus-within::before {
   width: 100%;
   opacity: 1;
 }
-#support_ticket_id:hover::after, #request_ticket_id:hover::after, #faq_ticket_id:hover::after {
+#support_ticket_id:hover::after, #support_ticket_id:focus-within::after,
+#request_ticket_id:hover::after,
+#request_ticket_id:focus-within::after,
+#faq_ticket_id:hover::after,
+#faq_ticket_id:focus-within::after {
   height: 100%;
   opacity: 1;
 }
-#support_ticket_id:hover .left-border, #request_ticket_id:hover .left-border, #faq_ticket_id:hover .left-border {
+#support_ticket_id:hover .left-border, #support_ticket_id:focus-within .left-border,
+#request_ticket_id:hover .left-border,
+#request_ticket_id:focus-within .left-border,
+#faq_ticket_id:hover .left-border,
+#faq_ticket_id:focus-within .left-border {
   height: 100%;
   opacity: 1;
 }
-#support_ticket_id:hover .bottom-border, #request_ticket_id:hover .bottom-border, #faq_ticket_id:hover .bottom-border {
+#support_ticket_id:hover .bottom-border, #support_ticket_id:focus-within .bottom-border,
+#request_ticket_id:hover .bottom-border,
+#request_ticket_id:focus-within .bottom-border,
+#faq_ticket_id:hover .bottom-border,
+#faq_ticket_id:focus-within .bottom-border {
   width: 100%;
   opacity: 1;
+}
+#support_ticket_id:hover .ticket-title, #support_ticket_id:focus-within .ticket-title,
+#request_ticket_id:hover .ticket-title,
+#request_ticket_id:focus-within .ticket-title,
+#faq_ticket_id:hover .ticket-title,
+#faq_ticket_id:focus-within .ticket-title {
+  background: linear-gradient(270deg, #0D92F4, #77CDFF, #F95454, #C62E2E);
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: pulseGradient 3s ease infinite;
 }
 @media screen and (max-width: 768px) {
-  #support_ticket_id, #request_ticket_id, #faq_ticket_id {
+  #support_ticket_id,
+  #request_ticket_id,
+  #faq_ticket_id {
     padding: 1rem;
   }
-  #support_ticket_id .card-body, #request_ticket_id .card-body, #faq_ticket_id .card-body {
+  #support_ticket_id .card-body,
+  #request_ticket_id .card-body,
+  #faq_ticket_id .card-body {
     font-size: 0.95rem;
+  }
+  #support_ticket_id .ticket-title,
+  #request_ticket_id .ticket-title,
+  #faq_ticket_id .ticket-title {
+    font-size: 1.3rem;
   }
 }
 @media screen and (max-width: 480px) {
-  #support_ticket_id, #request_ticket_id, #faq_ticket_id {
+  #support_ticket_id,
+  #request_ticket_id,
+  #faq_ticket_id {
     padding: 0.75rem;
   }
-  #support_ticket_id .card-body, #request_ticket_id .card-body, #faq_ticket_id .card-body {
+  #support_ticket_id .card-body,
+  #request_ticket_id .card-body,
+  #faq_ticket_id .card-body {
     font-size: 0.9rem;
+  }
+  #support_ticket_id .ticket-title,
+  #request_ticket_id .ticket-title,
+  #faq_ticket_id .ticket-title {
+    font-size: 1.1rem;
   }
 }
 

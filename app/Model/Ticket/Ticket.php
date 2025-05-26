@@ -11,7 +11,6 @@ class Ticket extends DbConfig{
         $this->data = $post_data;
     }
 
-
     public function addNewTicketRecord($filePath = null) {
         try {
             $conn = $this->db_connection();
@@ -49,6 +48,7 @@ class Ticket extends DbConfig{
             }
 
             $localTicketId = $decoded['control_number'];
+            $status_id = 1; // OPEN status ID
 
             $apiKey = $this->getApiKey();
             $sdpUrl = ($this->getSdpUrl()) . '/requests';
@@ -63,7 +63,7 @@ class Ticket extends DbConfig{
                         "Ticket Details: \n\n" .
                         $this->data['description'],
                     'requester' => ['id' => $this->data['name']],
-                    'status' => ['id' => '1'],
+                    'status' => ['id' => $status_id],
                     'service_category' => ['id' => $this->data['category']],
                     'site' => ['id' => $this->data['sbu']],
                 ]
@@ -104,6 +104,8 @@ class Ticket extends DbConfig{
                 return ['error' => 'SDP ticket ID not returned'];
             }
 
+            $attachmentIdsJson = null;
+
             if ($filePath && file_exists($filePath)) {
                 $attachmentUrl = ($this->getSdpUrl()) . '/attachments';
 
@@ -138,9 +140,16 @@ class Ticket extends DbConfig{
                         'details' => json_decode($attachmentResponse, true) ?: $attachmentResponse
                     ];
                 }
+
+                $attachmentResult = json_decode($attachmentResponse, true);
+                $attachmentId = $attachmentResult['attachment']['id'] ?? null;
+
+                if ($attachmentId !== null) {
+                    $attachmentIdsJson = json_encode([(string)$attachmentId]);
+                }
             }
 
-            $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
             $stmtSdp->bindParam(1, $sdpId);
             $stmtSdp->bindParam(2, $localTicketId);
             $stmtSdp->bindParam(3, $this->data['name']);
@@ -155,6 +164,8 @@ class Ticket extends DbConfig{
             $stmtSdp->bindParam(12, $this->data['userCategory_text']);
             $stmtSdp->bindParam(13, $this->data['userFullName_text']);
             $stmtSdp->bindParam(14, $this->data['userSBU_text']);
+            $stmtSdp->bindParam(15, $status_id);
+            $stmtSdp->bindParam(16, $attachmentIdsJson);
             $stmtSdp->execute();
             $resulttoAPI = $stmtSdp->fetch(\PDO::FETCH_ASSOC);
 
@@ -455,69 +466,143 @@ class Ticket extends DbConfig{
         }
     } 
 
-    public function getTicketStatusFromSDP() {
+    public function loadAllActiveCategoryFromDB(){
         $conn = $this->db_connection();
-        $stmt = $conn->prepare("CALL gticket.sp_getTicketDetails(?)");
-        $stmt->bindParam(1, $this->data['id']);
+        $stmt = $conn->prepare("call gticket.sp_getAllCategories()");
         $stmt->execute();
         $result = $stmt->fetch(\PDO::FETCH_ASSOC);
-        $stmt->closeCursor();
-        print_r($result);
-        exit();
-        if (!$result || !isset($result['id'])) {
-            http_response_code(500);
-            header('Content-Type: application/json');
-            return ['error' => 'Failed to retrieve data in database'];
-        }
+        $option = ($result['option'] == NULL) ? '' : join('',json_decode($result['option']));
+        return [
+            'data' => ($result['data'] == NULL) ? [] : json_decode($result['data']),
+            'option' => $option
+        ];
+    }
 
-        $decoded = json_decode($result['data'], true);
+    public function getTicketStatusByNumber($ipAddress = null) {
+        $conn = $this->db_connection();
 
-        if (!$decoded || !isset($decoded['control_number'])) {
-            http_response_code(500);
-            header('Content-Type: application/json');
-            return ['error' => 'Invalid data returned from stored procedure'];
-        }
-
-        $ticketId = $decoded['control_number'];
-
-        $apiKey = $this->getApiKey();
-        $sdpUrl = ($this->getSdpUrl()) . '/requests/'.$ticketId;
-    
-        $ch = curl_init($sdpUrl);
-        
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true, 
-            CURLOPT_HTTPHEADER => [
-                'Authtoken: ' . $apiKey,
-                'Content-Type: application/json'
-            ]
-        ]);
-    
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
-
-        if ($httpCode >= 200 && $httpCode < 300) {
-
-            $ticketData = json_decode($response, true);
+        try {
+            $ip = $ipAddress ?? ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
             
-            if (isset($ticketData['request']['status'])) {
+            $stmt = $conn->prepare("CALL gticket.sp_getTicketDetails(?, ?)");
+            $stmt->bindParam(1, $this->data['id']);
+            $stmt->bindParam(2, $ip);
+            $stmt->execute();
+            $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $stmt->closeCursor();
 
-                return $ticketData['request']['status'];
+            if (!$result || empty($result['localTicketID'])) {
+                http_response_code(500);
+                return ['error' => 'Failed to retrieve ticket details from the database'];
+            }
+
+            if (!empty($result['serviceID'])) {
+                $ticketId = $result['serviceID'];
             } else {
+                http_response_code(500);
+                return ['error' => 'No valid ticket identifier found to query SDP API'];
+            }
+
+            $apiKey = $this->getApiKey();
+            $sdpUrl = $this->getSdpUrl() . '/requests/' . $ticketId;
+
+            $ch = curl_init($sdpUrl);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    'Authtoken: ' . $apiKey,
+                    'Content-Type: application/json'
+                ]
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode >= 200 && $httpCode < 300) {
+                $ticketData = json_decode($response, true);
+                if (isset($ticketData['request'])) {
+                    $status = $ticketData['request']['status'] ?? null;
+                    $result['statusid'] = $status['id'] ?? null;
+                    $result['statusname'] = $status['name'] ?? null;
+                    $result['statuscolor'] = $status['color'] ?? null;
+
+                    $technician = $ticketData['request']['technician'] ?? null;
+                    if ($technician && is_array($technician)) {
+                        $result['technician'] = [
+                            'name' => $technician['name'] ?? null,
+                            'id' => $technician['id'] ?? null,
+                            'email_id' => $technician['email_id'] ?? null,
+                        ];
+                    } else {
+                        $result['technician'] = null;
+                    }
+
+                    $resolution = $ticketData['request']['resolution'] ?? null;
+                    if ($resolution && is_array($resolution)) {
+                        $result['resolution'] = [
+                            'content' => $resolution['content'] ?? null
+                        ];
+                    } else {
+                        $result['resolution'] = null;
+                    }
+
+                    $attachments = $ticketData['request']['attachments'] ?? [];
+                    $attachmentIds = [];
+
+                    if (!empty($attachments) && is_array($attachments)) {
+                        foreach ($attachments as $attachment) {
+                            if (isset($attachment['id'])) {
+                                $attachmentIds[] = $attachment['id'];
+                            }
+                        }
+                    }
+
+                    $attachmentIdsJson = !empty($attachmentIds) ? json_encode($attachmentIds) : null;
+
+                    $updateStmt = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
+                    $updateStmt->bindValue(1, $ticketId);
+                    $updateStmt->bindValue(2, $result['localTicketID']);
+                    $updateStmt->bindValue(3, $result['name'] ?? 0, \PDO::PARAM_INT);
+                    $updateStmt->bindValue(4, $result['warehouseID'] ?? 0, \PDO::PARAM_INT);
+                    $updateStmt->bindValue(5, $result['title'] ?? '');
+                    $updateStmt->bindValue(6, $result['description'] ?? '');
+                    $updateStmt->bindValue(7, $result['email'] ?? '');
+                    $updateStmt->bindValue(8, $result['contact'] ?? '');
+                    $updateStmt->bindValue(9, $ip);
+                    $updateStmt->bindValue(10, $result['resolution']['content'] ?? '');
+                    $updateStmt->bindValue(11, $result['category'] ?? 0, \PDO::PARAM_INT);
+                    $updateStmt->bindValue(12, $result['category_name'] ?? '');
+                    $updateStmt->bindValue(13, $result['user_FullName'] ?? '');
+                    $updateStmt->bindValue(14, $result['warehouseName'] ?? '');
+                    $updateStmt->bindValue(15, $result['statusid'] ?? 0, \PDO::PARAM_INT);
+                    $updateStmt->bindValue(16, $attachmentIdsJson, is_null($attachmentIdsJson) ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+                    $updateStmt->execute();
+                    $insertResult = $updateStmt->fetch(\PDO::FETCH_ASSOC);
+                    $updateStmt->closeCursor();
+                    $combinedResult = array_merge($result, [
+                        'trail_id' => $insertResult['trail_id'] ?? null
+                    ]);
+
+                    return $combinedResult;
+                } else {
+                    return ['error' => 'Status not found in the ticket data'];
+                }
+            } else {
+                error_log("SDP API request failed. HTTP Code: $httpCode | Error: $error | Response: $response");
                 return [
-                    'error' => 'Status not found in the ticket data'
+                    'error' => 'Failed to retrieve ticket status from SDP API',
+                    'details' => $response
                 ];
             }
-        } else {
-            // Log and return error if the API request fails
-            error_log("SDP API request failed. HTTP Code: $httpCode | Error: $error | Response: $response");
-            return [
-                'error' => 'Failed to retrieve ticket status from SDP API',
-                'details' => $response
-            ];
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            return ['error' => 'Database error: ' . $e->getMessage()];
+        } catch (\Exception $e) {
+            http_response_code(500);
+            return ['error' => 'Unexpected error: ' . $e->getMessage()];
         }
     }
 

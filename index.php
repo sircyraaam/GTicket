@@ -21,7 +21,7 @@ include('./inc/header.inc.php');
                         <div class="left-border"></div>
                         <div class="bottom-border"></div>
                         <div class="card-body">
-                            <h5 class="card-title fw-semibold fs-4 header-title">Support Ticket</h5>
+                            <h5 class="card-title fw-semibold fs-4 header-title ticket-title">Support Ticket</h5>
                             <p class="card-text">
                                 For specific technical issue that was encountered by the user, prompting the
                                 need for a thorough investigation to ensure timely remediation
@@ -38,7 +38,7 @@ include('./inc/header.inc.php');
                         <div class="left-border"></div>
                         <div class="bottom-border"></div>
                         <div class="card-body">
-                            <h5 class="card-title fw-semibold fs-4 header-title">Request Ticket</h5>
+                            <h5 class="card-title fw-semibold fs-4 header-title ticket-title">Request Ticket</h5>
                             <p class="card-text">
                                 For users requesting something new
                             </p>
@@ -54,7 +54,7 @@ include('./inc/header.inc.php');
                         <div class="left-border"></div>
                         <div class="bottom-border"></div>
                         <div class="card-body">
-                            <h5 class="card-title fw-semibold fs-4 header-title">FAQ</h5>
+                            <h5 class="card-title fw-semibold fs-4 header-title ticket-title">FAQ</h5>
                             <p class="card-text">Common Issues with defined solutions</p>
                         </div>
                     </div>
@@ -62,7 +62,7 @@ include('./inc/header.inc.php');
             </div>
         </div>
 
-        <!-- <div class="row justify-content-center text-center mt-5 mb-5">
+        <div class="row justify-content-center text-center mt-5 mb-5">
             <div class="col-lg-6">
                 <div class="input-group form-floating shadow-sm">
                     <span class="input-group-text bg-light fw-semibold">GTIX</span>
@@ -73,7 +73,7 @@ include('./inc/header.inc.php');
                 </div>
                 <div class="form-text mt-2">Please provide your ticket number to view details</div>
             </div>
-        </div> -->
+        </div>
     </div>
 </section>
 
