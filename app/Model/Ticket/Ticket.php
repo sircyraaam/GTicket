@@ -11,10 +11,12 @@ class Ticket extends DbConfig{
         $this->data = $post_data;
     }
 
-    public function addNewTicketRecord($filePath = null) {
+    public function addNewTicketRecord($filePath = null)
+    {
         try {
             $conn = $this->db_connection();
             $stmt = $conn->prepare("CALL gticket.sp_saveTicketRecord(?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
             $stmt->bindParam(1, $this->data['name']);
             $stmt->bindParam(2, $this->data['sbu']);
             $stmt->bindParam(3, $this->data['title']);
@@ -30,6 +32,7 @@ class Ticket extends DbConfig{
             $stmt->bindParam(13, $this->data['ticket_type']);
             $stmt->bindParam(14, $filePath);
             $stmt->execute();
+
             $result = $stmt->fetch(\PDO::FETCH_ASSOC);
             $stmt->closeCursor();
 
@@ -48,10 +51,10 @@ class Ticket extends DbConfig{
             }
 
             $localTicketId = $decoded['control_number'];
-            $status_id = "Open"; // OPEN status ID
+            $status_id = "Open";
 
             $apiKey = $this->getApiKey();
-            $sdpUrl = ($this->getSdpUrl()) . '/requests';
+            $sdpUrl = $this->getSdpUrl() . '/requests';
 
             $payload = [
                 'request' => [
@@ -60,8 +63,7 @@ class Ticket extends DbConfig{
                         "Local Ticket ID: $localTicketId\n\n" .
                         "User Declared Email: " . $this->data['email'] . "\n\n" .
                         "User Declared Contact: " . $this->data['contact'] . "\n\n" .
-                        "Ticket Details: \n\n" .
-                        $this->data['description'],
+                        "Ticket Details: \n\n" . $this->data['description'],
                     'requester' => ['id' => $this->data['name']],
                     'status' => ['name' => $status_id],
                     'service_category' => ['id' => $this->data['category']],
@@ -107,7 +109,32 @@ class Ticket extends DbConfig{
             $attachmentIdsJson = null;
 
             if ($filePath && file_exists($filePath)) {
-                $attachmentUrl = ($this->getSdpUrl()) . '/attachments';
+                $allowedMimeTypes = [
+                    'image/png',
+                    'image/jpeg',
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ];
+                $maxFileSize = 10 * 1024 * 1024;
+                $mimeType = mime_content_type($filePath);
+                $fileSize = filesize($filePath);
+
+                if (!in_array($mimeType, $allowedMimeTypes)) {
+                    return [
+                        'error' => 'Invalid file type. Allowed types: PNG, JPG, PDF, DOC, DOCX',
+                        'mime_type' => $mimeType
+                    ];
+                }
+
+                if ($fileSize > $maxFileSize) {
+                    return [
+                        'error' => 'File size exceeds the 10MB limit',
+                        'file_size' => $fileSize
+                    ];
+                }
+
+                $attachmentUrl = $this->getSdpUrl() . '/attachments';
 
                 $attachmentPayload = [
                     'input_data' => json_encode([
@@ -153,6 +180,7 @@ class Ticket extends DbConfig{
             $resolution = null;
 
             $stmtSdp = $conn->prepare("CALL sp_update_ticket_record(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
             $stmtSdp->bindParam(1, $sdpId);
             $stmtSdp->bindParam(2, $localTicketId);
             $stmtSdp->bindParam(3, $this->data['name']);
@@ -172,6 +200,7 @@ class Ticket extends DbConfig{
             $stmtSdp->bindParam(17, $technician);
             $stmtSdp->bindParam(18, $resolution);
             $stmtSdp->execute();
+
             $resulttoAPI = $stmtSdp->fetch(\PDO::FETCH_ASSOC);
 
             if (($resulttoAPI['result'] ?? null) != 1) {
@@ -198,6 +227,7 @@ class Ticket extends DbConfig{
             ];
         }
     }
+
 
 
     public function loadAllActiveWarehouses(){

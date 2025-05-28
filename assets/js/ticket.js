@@ -116,7 +116,7 @@ function activityModalSubmit(type) {
                         showSuccessAlert(result.local_ticket_id);
                     } else {
                         closeLoaderAlert();
-                        showErrorAlert('Failed to Add New Record');
+                        showErrorAlert('Failed to Add New Record' + `<br>` + result.error);
                     }
                 },
                 error: function(xhr, status, error) {
