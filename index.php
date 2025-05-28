@@ -33,7 +33,7 @@ include('./inc/header.inc.php');
 
             <!-- Request Ticket -->
                          <div class="col-md-4 mb-2">
-                <a href="ticket_page.php?type=support" class="text-decoration-none text-dark">
+                <a href="ticket_page.php?type=request" class="text-decoration-none text-dark">
                     <div class="card container-shadow py-3 h-100" id="request_ticket_id">
                         <div class="left-border"></div>
                         <div class="bottom-border"></div>

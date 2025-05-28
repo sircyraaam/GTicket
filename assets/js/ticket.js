@@ -308,14 +308,13 @@ function getTicketDetailsFromSession() {
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = resolutionContent;
 
-    // Replace <br> and block-level tags with newlines
+
     let plainText = tempDiv.innerHTML
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<\/div>/gi, '\n')
-        .replace(/<[^>]+>/g, '') // remove all other tags
+        .replace(/<[^>]+>/g, '')
         .trim();
 
-    // Optionally: replace multiple newlines with just one
     plainText = plainText.replace(/\n{2,}/g, '\n');
 
     $('#ticketResolutionView').text(plainText);
