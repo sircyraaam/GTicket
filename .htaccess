@@ -12,19 +12,23 @@ Options +FollowSymLinks -MultiViews
 RewriteEngine On
 RewriteBase /GTicket/
 
-# ✅ Force HTTPS (prevents redirect loops with GoDaddy proxy)
-RewriteCond %{HTTPS} off [OR]
-RewriteCond %{HTTP:X-Forwarded-Proto} !https
+# ✅ Trust HTTPS from proxy (e.g. GoDaddy, Cloudflare, Docker)
+SetEnvIf X-Forwarded-Proto https HTTPS=on
+
+# ✅ Force HTTPS (avoid redirect loop)
+RewriteCond %{HTTPS} !=on
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
-# ✅ Clean URLs: remove .php from GET requests
+# ✅ Remove .php from GET requests (non-POST only)
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
 RewriteRule ^ %1 [R=302,L,NE]
 
 # ✅ Internally route /page to /page.php if it exists
-RewriteCond %{REQUEST_FILENAME}.php -f [NC]
-RewriteRule ^ %{REQUEST_URI}.php [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.+)$ $1.php [L]
 
 # ==================================================
 # 🚧 Custom 404 Page
@@ -35,35 +39,14 @@ ErrorDocument 404 /GTicket/404error.php
 # ✅ Secure HTTP Headers
 # ==================================================
 <IfModule mod_headers.c>
-
-    # 🛡 Content Security Policy (allow Google Fonts)
     Header always set Content-Security-Policy "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; object-src 'none'; frame-ancestors 'none';"
-
-    # 🌐 Referrer Policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-
-    # 🔐 Strict Transport Security (HSTS) - preload ready
     Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
-
-    # 🧱 Clickjacking Protection
     Header always set X-Frame-Options "DENY"
-
-    # 🛑 Prevent MIME sniffing
     Header always set X-Content-Type-Options "nosniff"
-
-    # ⚠️ XSS Filter (legacy, still tested)
     Header always set X-XSS-Protection "1; mode=block"
-
-    # 📄 Expect-CT (certificate transparency)
     Header always set Expect-CT "max-age=86400, enforce"
-
-    # 🔄 Cross-Origin Resource Policy
     Header always set Cross-Origin-Resource-Policy "same-site"
-
-    # 🛑 Cross-Origin Embedder Policy
     Header always set Cross-Origin-Embedder-Policy "require-corp"
-
-    # 🚫 Permissions Policy (disable sensors, camera, mic, etc.)
     Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
-
 </IfModule>
