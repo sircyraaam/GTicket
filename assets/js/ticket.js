@@ -175,62 +175,77 @@ function syncWarehousestoLocalDB(){
 }
 
 
-function loadAllWarehouses(){
-    $.ajax({
-        type: "POST",
-        url: "app/Controller/ajax_ticket.php",
-        data: {
-            function:'loadAllWarehouses'
-        },
-        dataType: 'json',
-        success: function(result){
-            console.log(result);
-            const {option} = result;
-            $('#userSBU').html(`<option value="0">Select SBU</option>${option}`);
-        },
-        error: function(xhr, status, error) {
-            console.error("AJAX Error:", error);
-        }
+function loadAllWarehouses() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: "POST",
+            url: "app/Controller/ajax_ticket.php",
+            data: {
+                function: 'loadAllWarehouses'
+            },
+            dataType: 'json',
+            success: function(result) {
+                console.log(result);
+                const { option } = result;
+                $('#userSBU').html(`<option value="0">Select SBU</option>${option}`);
+                resolve(result);
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", error);
+                reject(error); 
+            }
+        });
     });
 }
 
-function loadAllUsers(){
-    $.ajax({
-        type: "POST",
-        url: "app/Controller/ajax_ticket.php",
-        data: {
-            function:'loadAllUsers'
-        },
-        dataType: 'json',
-        success: function(result){
-            console.log(result);
-            const {option} = result;
-            $('#userFullName').html(`<option value="0">Select User</option>${option}`);
-        },
-        error: function(xhr, status, error) {
-            console.error("AJAX Error:", error);
-        }
+
+function loadAllUsers() {
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: "POST",
+            url: "app/Controller/ajax_ticket.php",
+            data: {
+                function: 'loadAllUsers'
+            },
+            dataType: 'json',
+            success: function(result) {
+                console.log(result);
+                const { option } = result;
+                $('#userFullName').html(`<option value="0">Select User</option>${option}`);
+                resolve(result);
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", error);
+                reject(error);
+            }
+        });
     });
 }
+
 
 function loadAllCategory() {
-    $.ajax({
-        type: "POST",
-        url: "app/Controller/ajax_ticket.php",
-        data: {
-            function: 'loadAllCategory'
-        },
-        dataType: 'json',
-        success: function(result) {
-            console.log(result);
-            const {option} = result;
-            $('#userCategory').html(`<option value="0">Select Category</option>${option}`);
-        },
-        error: function(xhr, status, error) {
-            console.error("AJAX Error:", error);
-        }
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            type: "POST",
+            url: "app/Controller/ajax_ticket.php",
+            data: {
+                function: 'loadAllCategory'
+            },
+            dataType: 'json',
+            success: function(result) {
+                console.log(result);
+                const { option } = result;
+                $('#userCategory').html(`<option value="0">Select Category</option>${option}`);
+                resolve(result);
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error:", error);
+                reject(error);
+            }
+        });
     });
 }
+
 
 function ticketResetField(){
     $('#submit_ticket')[0].reset();
