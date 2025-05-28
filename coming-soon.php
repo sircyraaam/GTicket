@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Coming Soon</title>
+  <title>Coming Soon | Glacier</title>
+
+  <!----===== ICON LOGO =====-->
+  <link rel="icon" href="assets/img/GILILOGO3.png" type="image/gif" sizes="16x16">
   <link rel="stylesheet" href="assets/css/coming-soon.css">
 </head>
 <body>
