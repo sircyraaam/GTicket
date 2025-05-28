@@ -1,45 +1,61 @@
-# Prevent Apache from serving .ht* files:
+# ========================================
+# 🔐 BLOCK ACCESS TO .ht* FILES
+# ========================================
 <FilesMatch "^\.ht">
-Order allow,deny
-Deny from all
+    Require all denied
 </FilesMatch>
 
-
+# ========================================
+# 🔀 URL REWRITE ENGINE
+# ========================================
 Options +FollowSymLinks -MultiViews
-# Turn mod_rewrite on
 RewriteEngine On
-RewriteBase /
-RewriteCond %{HTTPS} off
-RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [NE,L,R=301]
+RewriteBase /GTicket/
 
-# To externally redirect /dir/foo.php to /dir/foo
+# ========================================
+# 🔐 FORCE HTTPS (proxy-friendly, GoDaddy-safe)
+# ========================================
+RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# ========================================
+# 🧼 CLEAN URLS: Redirect /file.php to /file
+# ========================================
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
 RewriteRule ^ %1 [R=302,L,NE]
 
-## To internally redirect /dir/foo to /dir/foo.php
+# ========================================
+# 🛠 CLEAN URLS: Internally rewrite /file to /file.php
+# ========================================
 RewriteCond %{REQUEST_FILENAME}.php -f [NC]
 RewriteRule ^ %{REQUEST_URI}.php [L]
 
-ErrorDocument 404 https://%{HTTP_HOST}/GTicket/404error.php
+# ========================================
+# 🚧 CUSTOM 404 ERROR PAGE
+# ========================================
+ErrorDocument 404 /GTicket/404error.php
 
+# ========================================
+# 🛡️ SECURITY HEADERS
+# ========================================
 <IfModule mod_headers.c>
-    # Content Security Policy
-    Header always set Content-Security-Policy "default-src 'self'; object-src 'none'; script-src 'self'; style-src 'self'; frame-ancestors 'none';"
+    # Prevent XSS and content injection
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none';"
 
-    # Referrer Policy
+    # Hide referrer data on cross-origin requests
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
-    # Strict Transport Security (HSTS)
+    # Enforce HTTPS in browsers (HSTS)
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 
-    # X-Content-Type-Options
+    # Block MIME-type sniffing
     Header always set X-Content-Type-Options "nosniff"
 
-    # X-Frame-Options
+    # Prevent clickjacking
     Header always set X-Frame-Options "SAMEORIGIN"
 
-    # Cross-Origin Resource Policy
+    # Control resource sharing policy
     Header always set Cross-Origin-Resource-Policy "same-site"
 </IfModule>
