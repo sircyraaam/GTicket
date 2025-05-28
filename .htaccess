@@ -1,47 +1,47 @@
 # ========================================
-# 🔐 SECURITY: Block access to .ht* files
+# 🔐 BLOCK ACCESS TO .ht* FILES
 # ========================================
 <FilesMatch "^\.ht">
     Require all denied
 </FilesMatch>
 
 # ========================================
-# 🔀 URL Rewrite Engine
+# 🔀 URL REWRITE ENGINE
 # ========================================
 Options +FollowSymLinks -MultiViews
 RewriteEngine On
 RewriteBase /
 
 # ========================================
-# 🔐 Force HTTPS (even behind proxies/load balancers)
+# 🔐 FORCE HTTPS (Handles proxies like Cloudflare or load balancers)
 # ========================================
 RewriteCond %{HTTPS} off [OR]
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [NE,L,R=301]
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
 # ========================================
-# 🧼 Clean URLs: Redirect /foo.php to /foo (external redirect)
+# 🧼 CLEAN URL: Redirect /file.php to /file (external redirect)
 # ========================================
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
 RewriteRule ^ %1 [R=302,L,NE]
 
 # ========================================
-# 🛠 Internally rewrite /foo to /foo.php
+# 🛠 CLEAN URL: Internally rewrite /file to /file.php
 # ========================================
 RewriteCond %{REQUEST_FILENAME}.php -f [NC]
 RewriteRule ^ %{REQUEST_URI}.php [L]
 
 # ========================================
-# 🚧 Custom 404 Error Page
+# 🚧 CUSTOM 404 ERROR PAGE
 # ========================================
 ErrorDocument 404 /GTicket/404error.php
 
 # ========================================
-# 🛡️ Security Headers
+# 🛡️ SECURITY HEADERS
 # ========================================
 <IfModule mod_headers.c>
-    Header always set Content-Security-Policy "default-src 'self'; object-src 'none'; frame-ancestors 'none';"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none';"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
     Header always set X-Content-Type-Options "nosniff"
