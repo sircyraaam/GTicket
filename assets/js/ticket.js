@@ -1,11 +1,4 @@
 $(document).ready( () => {
-    $('#veteranActivityOnProcessTableModal').on('shown.bs.modal', function () {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-
     $('#userSBU, #userFullName, #userCategory').select2();
 
 })
@@ -79,7 +72,7 @@ function SubmitRecord(event, id, type) {
     window.ticketFormData = formData;
 
     activityModalFilter(
-        "Do you want to add a new activity record for this Veteran?",
+        "Do you want to submit this ticket?",
         `<button type="button" class="btn btn-danger btn-sm px-4" data-bs-dismiss="modal">Close</button>
          <button type="button" class="btn btn-primary btn-sm px-4" onclick="activityModalSubmit('addTicket')">Submit</button>`
     );

@@ -1,25 +1,50 @@
-# Prevent Apache from serving .ht* files:
+# ========================================
+# 🔐 SECURITY: Block access to .ht* files
+# ========================================
 <FilesMatch "^\.ht">
-Order allow,deny
-Deny from all
+    Require all denied
 </FilesMatch>
 
-
+# ========================================
+# 🔀 URL Rewrite Engine
+# ========================================
 Options +FollowSymLinks -MultiViews
-# Turn mod_rewrite on
 RewriteEngine On
 RewriteBase /
-RewriteCond %{HTTPS} off
+
+# ========================================
+# 🔐 Force HTTPS (even behind proxies/load balancers)
+# ========================================
+RewriteCond %{HTTPS} off [OR]
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [NE,L,R=301]
 
-# To externally redirect /dir/foo.php to /dir/foo
+# ========================================
+# 🧼 Clean URLs: Redirect /foo.php to /foo (external redirect)
+# ========================================
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
 RewriteRule ^ %1 [R=302,L,NE]
 
-## To internally redirect /dir/foo to /dir/foo.php
+# ========================================
+# 🛠 Internally rewrite /foo to /foo.php
+# ========================================
 RewriteCond %{REQUEST_FILENAME}.php -f [NC]
 RewriteRule ^ %{REQUEST_URI}.php [L]
 
-ErrorDocument 404 https://%{HTTP_HOST}/GTicket/404error.php
+# ========================================
+# 🚧 Custom 404 Error Page
+# ========================================
+ErrorDocument 404 /GTicket/404error.php
+
+# ========================================
+# 🛡️ Security Headers
+# ========================================
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "default-src 'self'; object-src 'none'; frame-ancestors 'none';"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Cross-Origin-Resource-Policy "same-site"
+</IfModule>
