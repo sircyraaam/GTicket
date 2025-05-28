@@ -1,50 +1,69 @@
-# ========================================
-# 🔐 BLOCK ACCESS TO .ht* FILES
-# ========================================
+# ==================================================
+# 🔐 Block .ht* files (security)
+# ==================================================
 <FilesMatch "^\.ht">
     Require all denied
 </FilesMatch>
 
-# ========================================
-# 🔀 REWRITE ENGINE ON
-# ========================================
+# ==================================================
+# 🔀 URL Rewrite Settings
+# ==================================================
 Options +FollowSymLinks -MultiViews
 RewriteEngine On
 RewriteBase /GTicket/
 
-# ========================================
-# 🔐 FORCE HTTPS ONLY IF NOT ALREADY SECURE
-# ========================================
-RewriteCond %{HTTPS} !=on
+# ✅ Force HTTPS (prevents redirect loops with GoDaddy proxy)
+RewriteCond %{HTTPS} off [OR]
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
-# ========================================
-# 🧼 CLEAN URLS: Redirect /file.php to /file
-# ========================================
+# ✅ Clean URLs: remove .php from GET requests
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
 RewriteRule ^ %1 [R=302,L,NE]
 
-# ========================================
-# 🛠 CLEAN URLS: Internally rewrite /file to /file.php
-# ========================================
+# ✅ Internally route /page to /page.php if it exists
 RewriteCond %{REQUEST_FILENAME}.php -f [NC]
 RewriteRule ^ %{REQUEST_URI}.php [L]
 
-# ========================================
-# 🚧 CUSTOM 404 ERROR PAGE
-# ========================================
+# ==================================================
+# 🚧 Custom 404 Page
+# ==================================================
 ErrorDocument 404 /GTicket/404error.php
 
-# ========================================
-# 🛡️ SECURITY HEADERS
-# ========================================
+# ==================================================
+# ✅ Secure HTTP Headers
+# ==================================================
 <IfModule mod_headers.c>
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none';"
+
+    # 🛡 Content Security Policy (allow Google Fonts)
+    Header always set Content-Security-Policy "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; object-src 'none'; frame-ancestors 'none';"
+
+    # 🌐 Referrer Policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # 🔐 Strict Transport Security (HSTS) - preload ready
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+
+    # 🧱 Clickjacking Protection
+    Header always set X-Frame-Options "DENY"
+
+    # 🛑 Prevent MIME sniffing
     Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # ⚠️ XSS Filter (legacy, still tested)
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # 📄 Expect-CT (certificate transparency)
+    Header always set Expect-CT "max-age=86400, enforce"
+
+    # 🔄 Cross-Origin Resource Policy
     Header always set Cross-Origin-Resource-Policy "same-site"
+
+    # 🛑 Cross-Origin Embedder Policy
+    Header always set Cross-Origin-Embedder-Policy "require-corp"
+
+    # 🚫 Permissions Policy (disable sensors, camera, mic, etc.)
+    Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+
 </IfModule>
