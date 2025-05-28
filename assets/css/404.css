@@ -173,7 +173,7 @@ a.more-link {
 
 @media (max-width: 768px) {
   .error-container {
-    font-size: 120px; /* Reduce from 220px */
+    font-size: 120px;
     margin: 10px 10px;
   }
 

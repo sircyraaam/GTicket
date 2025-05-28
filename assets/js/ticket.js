@@ -110,10 +110,14 @@ function activityModalSubmit(type) {
                 contentType: false,
                 dataType: 'json',
                 success: function(result) {
+                    console.log(result);
+                    const notice = result.notice;
                     closeLoaderAlert();
                     const thirdResult = result.result?.result;
-                    if (thirdResult == '1') {
+                    if (thirdResult == '1' && !notice) {
                         showSuccessAlert(result.local_ticket_id);
+                    } else if (thirdResult == '1' && notice) {
+                        showSuccesswithNoticeAlert(result.local_ticket_id, notice);
                     } else {
                         closeLoaderAlert();
                         showErrorAlert('Failed to Add New Record' + `<br>` + result.error);

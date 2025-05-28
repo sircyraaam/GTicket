@@ -106,6 +106,7 @@ class Ticket extends DbConfig{
                 return ['error' => 'SDP ticket ID not returned'];
             }
 
+            $attachmentNotice = null;
             $attachmentIdsJson = null;
 
             if ($filePath && file_exists($filePath)) {
@@ -121,59 +122,49 @@ class Ticket extends DbConfig{
                 $fileSize = filesize($filePath);
 
                 if (!in_array($mimeType, $allowedMimeTypes)) {
-                    return [
-                        'error' => 'Invalid file type. Allowed types: PNG, JPG, PDF, DOC, DOCX',
-                        'mime_type' => $mimeType
+                    $attachmentNotice = "Invalid file type '$mimeType'. Allowed types: PNG, JPG, PDF, DOC, DOCX. Ticket will proceed without attachment.";
+                } elseif ($fileSize > $maxFileSize) {
+                    $attachmentNotice = "File size exceeds the 10MB limit. Ticket will proceed without attachment.";
+                } else {
+                    $attachmentUrl = $this->getSdpUrl() . '/attachments';
+
+                    $attachmentPayload = [
+                        'input_data' => json_encode([
+                            'attachment' => [
+                                'request' => ['id' => $sdpId]
+                            ]
+                        ]),
+                        'attachment' => new \CURLFile($filePath)
                     ];
+
+                    $chAttach = curl_init($attachmentUrl);
+                    curl_setopt_array($chAttach, [
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_POST => true,
+                        CURLOPT_HTTPHEADER => [
+                            'Authtoken: ' . $apiKey
+                        ],
+                        CURLOPT_POSTFIELDS => $attachmentPayload
+                    ]);
+
+                    $attachmentResponse = curl_exec($chAttach);
+                    $attachmentHttpCode = curl_getinfo($chAttach, CURLINFO_HTTP_CODE);
+                    $attachmentError = curl_error($chAttach);
+                    curl_close($chAttach);
+
+                    if ($attachmentHttpCode < 200 || $attachmentHttpCode >= 300) {
+                        error_log("SDP attachment upload failed. HTTP $attachmentHttpCode | Error: $attachmentError | Response: $attachmentResponse");
+                        $attachmentNotice = 'Failed to upload attachment. Ticket will proceed without attachment.';
+                    } else {
+                        $attachmentResult = json_decode($attachmentResponse, true);
+                        $attachmentId = $attachmentResult['attachment']['id'] ?? null;
+                        if ($attachmentId !== null) {
+                            $attachmentIdsJson = json_encode([(string)$attachmentId]);
+                        }
+                    }
                 }
-
-                if ($fileSize > $maxFileSize) {
-                    return [
-                        'error' => 'File size exceeds the 10MB limit',
-                        'file_size' => $fileSize
-                    ];
-                }
-
-                $attachmentUrl = $this->getSdpUrl() . '/attachments';
-
-                $attachmentPayload = [
-                    'input_data' => json_encode([
-                        'attachment' => [
-                            'request' => ['id' => $sdpId]
-                        ]
-                    ]),
-                    'attachment' => new \CURLFile($filePath)
-                ];
-
-                $chAttach = curl_init($attachmentUrl);
-                curl_setopt_array($chAttach, [
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_POST => true,
-                    CURLOPT_HTTPHEADER => [
-                        'Authtoken: ' . $apiKey
-                    ],
-                    CURLOPT_POSTFIELDS => $attachmentPayload
-                ]);
-
-                $attachmentResponse = curl_exec($chAttach);
-                $attachmentHttpCode = curl_getinfo($chAttach, CURLINFO_HTTP_CODE);
-                $attachmentError = curl_error($chAttach);
-                curl_close($chAttach);
-
-                if ($attachmentHttpCode < 200 || $attachmentHttpCode >= 300) {
-                    error_log("SDP attachment upload failed. HTTP $attachmentHttpCode | Error: $attachmentError | Response: $attachmentResponse");
-                    return [
-                        'error' => 'Failed to upload attachment',
-                        'details' => json_decode($attachmentResponse, true) ?: $attachmentResponse
-                    ];
-                }
-
-                $attachmentResult = json_decode($attachmentResponse, true);
-                $attachmentId = $attachmentResult['attachment']['id'] ?? null;
-
-                if ($attachmentId !== null) {
-                    $attachmentIdsJson = json_encode([(string)$attachmentId]);
-                }
+            } else {
+                $attachmentNotice = 'Ticket created without attachment.';
             }
 
             $technician = null;
@@ -212,11 +203,17 @@ class Ticket extends DbConfig{
 
             http_response_code(201);
             header('Content-Type: application/json');
-            return [
+            $response = [
                 'local_ticket_id' => $localTicketId,
                 'sdp_id' => $sdpId,
-                'result' => $decoded
+                'result' => $decoded,
             ];
+
+            if ($attachmentNotice !== null) {
+                $response['notice'] = $attachmentNotice;
+            }
+
+            return $response;
 
         } catch (\PDOException $e) {
             http_response_code(500);
@@ -227,8 +224,6 @@ class Ticket extends DbConfig{
             ];
         }
     }
-
-
 
     public function loadAllActiveWarehouses(){
         $conn = $this->db_connection();

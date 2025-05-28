@@ -1202,6 +1202,31 @@ function showSuccessAlert(controlNumber) {
     });
 }
 
+function showSuccesswithNoticeAlert(controlNumber, notice) {
+    let timerInterval;
+    Swal.fire({
+        title: 'Success!',
+        html: `Your ticket has been submitted but with a notice.<br><strong>Control Number:</strong> ${controlNumber} <br> ${notice} <br><br> Closing in <b></b> seconds...`,
+        icon: 'info',
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        allowOutsideClick: false,
+        timer: 10000,
+        timerProgressBar: true,
+        didOpen: () => {
+            const timer = Swal.getPopup().querySelector("b");
+            timerInterval = setInterval(() => {
+                timer.textContent = Math.ceil(Swal.getTimerLeft() / 1000);
+            }, 100);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+    }).then(() => {
+        location.reload();
+    });
+}
+
 function showErrorAlert(message) {
     Swal.fire({
         title: 'Error',
