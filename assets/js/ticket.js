@@ -281,7 +281,8 @@ function searchTicketByNumber(){
         error: function(xhr, status, error) {
             closeLoaderAlert();
             console.log(xhr.responseJSON.error);
-            showErrorAlertinSearch("("+  error + ") "+ xhr.responseJSON.error);        }
+            showErrorAlertinSearch("("+  error + ") "+ xhr.responseJSON.error);        
+        }
     });
     }
 }
