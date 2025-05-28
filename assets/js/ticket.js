@@ -130,6 +130,7 @@ function activityModalSubmit(type) {
 }
 
 function syncWarehousestoLocalDB(){
+
     $.ajax({
         type: "POST",
         url: "app/Controller/ajax_ticket.php",
@@ -137,9 +138,11 @@ function syncWarehousestoLocalDB(){
             function: 'syncWarehousestoLocalDB'
         },
         dataType: 'json',
+        beforeSend: function() {
+            showLoaderAlert();
+        },
         success: function(result){
             console.log(result);
-
             const siteCount = result.site_sync?.count || 0;
             const userCount = result.user_sync?.count || 0;
             const categoryCount = result.category_sync?.count || 0;
@@ -153,6 +156,7 @@ function syncWarehousestoLocalDB(){
                                 <strong>Category Sync:</strong> ${categoryCount} user(s) updated
                             </div>`;
 
+            closeLoaderAlert();
             if (siteCount > 0 || userCount > 0 || categoryCount > 0) {
                 showSyncSuccessAlert(message);
             } else if (siteStatus === 'NoUpdate' && userStatus === 'NoUpdate' && categoryStatus === 'NoUpdate') {
@@ -163,6 +167,7 @@ function syncWarehousestoLocalDB(){
             }
         },
         error: function(xhr, status, error) {
+            closeLoaderAlert();
             console.error('Sync failed:', status, error);
             showErrorSyncAlert('Sync Failed', 'Please try again to sync.');
         }

@@ -1147,6 +1147,7 @@ function showSyncSuccessAlert(message) {
     }).then(() => {
         loadAllWarehouses();
         loadAllUsers();
+        loadAllCategory();
     });
 }
 
