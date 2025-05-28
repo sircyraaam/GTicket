@@ -1,50 +1,25 @@
-# ========================================
-# 🔐 BLOCK ACCESS TO .ht* FILES
-# ========================================
+# Prevent Apache from serving .ht* files:
 <FilesMatch "^\.ht">
-    Require all denied
+Order allow,deny
+Deny from all
 </FilesMatch>
 
-# ========================================
-# 🔀 URL REWRITE ENGINE
-# ========================================
+
 Options +FollowSymLinks -MultiViews
+# Turn mod_rewrite on
 RewriteEngine On
 RewriteBase /
-
-# ========================================
-# 🔐 FORCE HTTPS (Handles proxies like Cloudflare or load balancers)
-# ========================================
-RewriteCond %{HTTPS} off [OR]
+RewriteCond %{HTTPS} off
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [NE,L,R=301]
 
-# ========================================
-# 🧼 CLEAN URL: Redirect /file.php to /file (external redirect)
-# ========================================
+# To externally redirect /dir/foo.php to /dir/foo
 RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.php [NC]
 RewriteRule ^ %1 [R=302,L,NE]
 
-# ========================================
-# 🛠 CLEAN URL: Internally rewrite /file to /file.php
-# ========================================
+## To internally redirect /dir/foo to /dir/foo.php
 RewriteCond %{REQUEST_FILENAME}.php -f [NC]
 RewriteRule ^ %{REQUEST_URI}.php [L]
 
-# ========================================
-# 🚧 CUSTOM 404 ERROR PAGE
-# ========================================
-ErrorDocument 404 /GTicket/404error.php
-
-# ========================================
-# 🛡️ SECURITY HEADERS
-# ========================================
-<IfModule mod_headers.c>
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'; frame-ancestors 'none';"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set Cross-Origin-Resource-Policy "same-site"
-</IfModule>
+ErrorDocument 404 https://%{HTTP_HOST}/GTicket/404error.php
