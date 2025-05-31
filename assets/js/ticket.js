@@ -132,7 +132,7 @@ function syncWarehousestoLocalDB(){
         type: "POST",
         url: "app/Controller/ajax_ticket.php",
         data: {
-            function: 'syncWarehousestoLocalDB'
+            function: 'syncCategorytoLocalDB'
         },
         dataType: 'json',
         beforeSend: function() {
@@ -140,26 +140,20 @@ function syncWarehousestoLocalDB(){
         },
         success: function(result){
             console.log(result);
-            const siteCount = result.site_sync?.count || 0;
-            const userCount = result.user_sync?.count || 0;
             const categoryCount = result.category_sync?.count || 0;
-            const siteStatus = result.site_sync?.result;
-            const userStatus = result.user_sync?.result;
             const categoryStatus = result.category_sync?.result;
 
             const message = `<div class="text-align-center">
-                                <strong>Site Sync:</strong> ${siteCount} site(s) updated <br>
-                                <strong>User Sync:</strong> ${userCount} user(s) updated <br>
                                 <strong>Category Sync:</strong> ${categoryCount} user(s) updated
                             </div>`;
 
             closeLoaderAlert();
-            if (siteCount > 0 || userCount > 0 || categoryCount > 0) {
+            if (categoryCount > 0) {
                 showSyncSuccessAlert(message);
-            } else if (siteStatus === 'NoUpdate' && userStatus === 'NoUpdate' && categoryStatus === 'NoUpdate') {
+            } else if (categoryStatus === 'NoUpdate') {
                 showSyncNoUpdateAlert(message);
             } else {
-                const msg = (result.site_sync?.message || '') + ' ' + (result.user_sync?.message || '') + ' ' + (result.category_sync?.message || '');
+                const msg = (result.category_sync?.message || '');
                 showErrorSyncAlert('Sync Failed', msg.trim());
             }
         },

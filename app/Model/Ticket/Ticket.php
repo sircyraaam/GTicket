@@ -6,6 +6,7 @@ use app\Model\DbConnection\DbConfig;
 
 class Ticket extends DbConfig{
     protected $data = null;
+    public $user = [];
     public function __construct($post_data){
         parent::__construct();
         $this->data = $post_data;
@@ -252,6 +253,12 @@ class Ticket extends DbConfig{
             $userId = $user['id'];
             $userName = $user['name'];
             $userEmail = $user['email_id'];
+            $userSite = $user['site'] ?? 0;
+            $userStatus = $user['status'] ?? 'UNKNOWN';
+
+
+            $user['site'] = $userSite;
+            $user['status'] = $userStatus;
 
             $stmt = $conn->prepare("SELECT sdp_user_name FROM tbl_sdp_users WHERE sdp_id = :user_id");
             $stmt->execute([':user_id' => $userId]);
@@ -265,38 +272,43 @@ class Ticket extends DbConfig{
             $updatedCount++;
         }
 
+        $logMessage = json_encode([
+            "message" => "Fetched User Data from SDP API. User Record Updated: $updatedCount",
+            "user_id" => "0"
+        ]);
+
         $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
         $logStmt->execute([
-            ':count' => "Fetched User Data from SDP API. User Record Updated: " . $updatedCount,
+            ':count' => $logMessage,
             ':ipaddress' => $ipAddress
         ]);
 
-        if ($updatedCount > 0) {
-            return [
-                'result' => 'Success',
-                'count' => $updatedCount
-            ];
-        } else {
-            return [
-                'result' => 'NoUpdate',
-                'count' => $updatedCount
-            ];
-        }
+        return [
+            'result' => $updatedCount > 0 ? 'Success' : 'NoUpdate',
+            'count' => $updatedCount
+        ];
     }
 
-    private function insertUserToDB($user){
+    private function insertUserToDB($user) {
         try {
             $conn = $this->db_connection();
-            $stmt = $conn->prepare("REPLACE INTO tbl_sdp_users (sdp_id, sdp_user_name, sdp_email) VALUES (:user_id, :user_name, :user_email)");
+
+            $stmt = $conn->prepare("
+                REPLACE INTO tbl_sdp_users (sdp_id, sdp_user_name, sdp_email, sdp_site, sdp_status)
+                VALUES (:user_id, :user_name, :user_email, :user_site, :user_status)
+            ");
             $stmt->execute([
                 ':user_id' => $user['id'],
                 ':user_name' => $user['name'],
-                ':user_email' => $user['email_id']
+                ':user_email' => $user['email_id'],
+                ':user_site' => $user['site'],   // defaults to 0 if no site
+                ':user_status' => $user['status'] // e.g. ACTIVE, INACTIVE
             ]);
         } catch (\PDOException $e) {
-            error_log("❌ Failed to insert site: " . $user['id'] . " - " . $e->getMessage());
+            error_log("❌ Failed to insert user ID {$user['id']} - " . $e->getMessage());
         }
     }
+
 
     public function loadAllActiveUsersFromDB(){
         $conn = $this->db_connection();
@@ -354,7 +366,9 @@ class Ticket extends DbConfig{
                     $users[] = [
                         'id' => $user['id'],
                         'name' => $user['name'],
-                        'email_id' => $user['email_id']
+                        'email_id' => $user['email_id'],
+                        'site' => $user['department']['site']['id'] ?? 0,
+                        'status' => $user['status']
                     ];
                 }
             }
@@ -401,9 +415,14 @@ class Ticket extends DbConfig{
             $updatedCount++;
         }
 
+        $logMessage = json_encode([
+            "message" => "Fetched Category Data from SDP API. Category Record Updated: $updatedCount",
+            "user_id" => "0"
+        ]);
+
         $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
         $logStmt->execute([
-            ':count' => "Fetched Category Data from SDP API. Category Record Updated: " . $updatedCount,
+            ':count' => $logMessage,
             ':ipaddress' => $ipAddress
         ]);
 
@@ -677,9 +696,14 @@ class Ticket extends DbConfig{
             $updatedCount++;
         }
 
+        $logMessage = json_encode([
+            "message" => "Fetched Site Data from SDP API. Site Record Updated: $updatedCount",
+            "user_id" => "0"
+        ]);
+
         $logStmt = $conn->prepare("CALL sp_logs_record(:count, :ipaddress)");
         $logStmt->execute([
-            ':count' => "Fetched Site Data from SDP API. Site Record Updated: " . $updatedCount,
+            ':count' => $logMessage,
             ':ipaddress' => $ipAddress
         ]);
 
@@ -803,5 +827,185 @@ class Ticket extends DbConfig{
             return ['data' => []];
         }
     }
+
+    function fetchUserDetailsFromDB(){
+        $conn = $this->db_connection();
+        $stmt = $conn->prepare("SELECT sdp_email, sdp_site FROM gticket.tbl_sdp_users WHERE sdp_id = :id");
+        $stmt->execute([':id' => $this->data['id']]);
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $result;
+    }
+
+    function signUpNewUser($ipAddress = "UNKNOWN") {
+        $conn = $this->db_connection();
+        $sdp_id = $this->data['logsdpname'];
+        $plainPassword = $this->generateRandomPassword();
+        $password = password_hash($plainPassword, PASSWORD_DEFAULT);
+        
+        $stmt = $conn->prepare("CALL sp_insertNewUserDetails(?,?,?,?,?,?)");
+        $stmt->bindParam(1, $sdp_id, \PDO::PARAM_INT);
+        $stmt->bindParam(2, $this->data['logsdpSBU'], \PDO::PARAM_INT);
+        $stmt->bindParam(3, $this->data['logemail'], \PDO::PARAM_STR);
+        $stmt->bindParam(4, $this->data['lognumber'], \PDO::PARAM_STR);
+        $stmt->bindParam(5, $password, \PDO::PARAM_STR);
+        $stmt->bindParam(6, $ipAddress, \PDO::PARAM_STR);
+        $stmt->execute();
+
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if ($result === false) {
+            $result = [];
+        }
+        
+        $result['plainPassword'] = $plainPassword;
+        $result['email'] = $this->data['logemail'];
+
+        return $result;
+    }
+
+
+    private function generateRandomPassword($length = 10) {
+        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+        $password = '';
+        $maxIndex = strlen($chars) - 1;
+
+        for ($i = 0; $i < $length; $i++) {
+            $password .= $chars[random_int(0, $maxIndex)];
+        }
+
+        return $password;
+    }
+
+    public function authenticate(){
+        $conn = $this->db_connection();
+        $username = $this->data['loginusername'];
+        $pass = $this->data['loginpassword'];
+        $ip = $this->data['ip_address'];
+        $check_acct = $conn->prepare("CALL gticket.sp_login_verifier(?)");
+        $check_acct->bindParam(1, $username);
+        $check_acct->execute();
+        $useracct = $check_acct->fetch(\PDO::FETCH_ASSOC);
+        $check_acct->closeCursor();
+        if($useracct['id'] > 0){
+            if(password_verify($pass, $useracct['password'])){
+                $userid = $useracct['id'];
+
+                // CHECKING IF EXISTING ACCOUNT IS ALL READY LOGGED IN TO ANOTHER DEVICE
+                $stmtCheckifLoggedIn = $conn->prepare("CALL gticket.sp_login_check_loggedInStatus(?)");
+                $stmtCheckifLoggedIn->bindParam(1, $userid);
+                $stmtCheckifLoggedIn->execute();
+                $row = $stmtCheckifLoggedIn->fetch(\PDO::FETCH_ASSOC);
+                $stmtCheckifLoggedIn->closeCursor();
+                if($row['isExist'] == 0){
+                    $stmtuser = $conn->prepare("call gticket.sp_login_insertToSessionTable(?,?)");
+                    $stmtuser->bindParam(1, $userid);
+                    $stmtuser->bindParam(2, $ip);
+                    $stmtuser->execute();
+                    $user = $stmtuser->fetch(\PDO::FETCH_ASSOC);
+                    return $this->user = [
+                        'token' => $user['token'],
+                        'ip' => $ip,
+                        'fullname' => $user['fullname'],
+                        'user_id' => $userid,
+                        'isUser' => true,
+                        'loginid' => $user['id']
+                    ];
+                }else{
+                    $getUserdtls = $conn->prepare("call gticket.sp_login_getUserDetails(?)");
+                    $getUserdtls->bindParam(1, $userid);
+                    $getUserdtls->execute();
+                    $UserDetails = $getUserdtls->fetch(\PDO::FETCH_ASSOC);
+                    return $this->user = [
+                        'loginid' => $UserDetails['id'],
+                        'token' => $UserDetails['token'],
+                        'user_id' => $userid,
+                        'isLoggedActive' => true,
+                        'isUser' => false
+                    ];
+                }
+            }else{
+                return $this->user = [
+                    'validateLogin' => 'Username/Password is incorrect. (2)',
+                    'isUser' => false
+                ];
+            }
+        }else{
+            return $this->user = [
+                'validateLogin' => 'Username/Password is not available. (1)',
+                'isUser' => false
+            ];
+        }
+    }
+
+    public function update_user_token(){
+        $conn = $this->db_connection();
+        $action = $this->data['action'];
+        $token = $this->data['token'];
+        $user_id = $this->data['user_id'];
+        $ip_address = $this->data['ip_address'];
+        $stmt = $conn->prepare("call rcd_mgmt.sp_mtce_login_logoutOtherDevice_NewLogin(?,?,?,?,?)");
+        $stmt->bindParam(1, $user_id);
+        $stmt->bindParam(2, $token);
+        $stmt->bindParam(3, $ip_address);
+        $stmt->bindParam(4, $action);
+        $stmt->bindParam(5, $this->data['loginid']);
+        $stmt->execute();
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $this->user = [
+            'token' => $user['token'],
+            'ip' => $ip_address,
+            'fullname' => $user['fullname'],
+            'role_id' => $user['role_id'],
+            'user_id' => $user_id,
+            'gender' => $user['gender'],
+            'isUser' => true,
+            'loginid' => $user['loginid'],
+            'role_name' => $user['role_name'],
+            'image' =>  $user['image'],
+        ];
+    }
+
+    public function logout(){
+        $conn = $this->db_connection();
+        $action = $this->data['action'];
+        $user_id = $this->data['user_id'];
+        $stmt = $conn->prepare("call rcd_mgmt.sp_mtce_logout_UnsetSession(?,?)");
+        $stmt->bindParam(1, $this->data['token']);
+        $stmt->bindParam(2, $user_id);
+        $stmt->execute();
+        $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $this->user = [
+            'token' => $user['token'],
+            'fullname' => $user['fullname'],
+            'role_id' => $user['role_id'],
+            'user_id' => $user_id,
+            'gender' => $user['gender'],
+            'isUser' => true,
+            'loginid' => $user['id'],
+            'role_name' => $user['role_name'],
+            'image' =>  $user['image'],
+        ];
+    }
+
+    public function check_user_session(){
+        $conn = $this->db_connection();
+        $token = $this->data['token'];
+        $user_id = $this->data['user_id'];
+        $stmt = $conn->prepare("CALL rcd_mgmt.sp_mtce_auth_checkUserSession(?,?)");
+        $stmt->bindParam(1, $token);
+        $stmt->bindParam(2, $user_id);
+        $stmt->execute();
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if($result['row_count'] > 0){
+            return $this->user = [
+                'auth' => 1
+            ];
+        }else{
+            return $this->user = [
+                'auth' => 0
+            ];
+        }
+    }
+
 
 }

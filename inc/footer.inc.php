@@ -28,9 +28,6 @@
     <!-- SELECT2 JS SCRIPTS -->
     <script src="assets/node_modules/select2-develop/dist/js/select2.min.js"></script>
 
-    <!-- TOAST JS SCRIPTS -->
-    <script src="assets/node_modules/toast/js/izitoast.min.js"></script>
-
     <!-- OWL JS SCRIPTS -->
     <script src="assets/node_modules/OwlCarousel/dist/owl.carousel.min.js"></script>
 

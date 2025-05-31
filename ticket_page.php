@@ -14,7 +14,7 @@ $ticketTitle = ($type === 'request') ? 'Submit Request Ticket' : 'Submit Support
                     <span class="fw-semibold fs-4 header-title" id="ticket_header">
                         <?= htmlspecialchars($ticketTitle) ?>
                     </span>
-                    <a href="index.php" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm rounded-3 px-3 py-2 text-decoration-none back-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Back">
+                    <a href="homepage.php" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm rounded-3 px-3 py-2 text-decoration-none back-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Back">
                         <i class='bx bx-left-arrow-circle fs-5 icon'></i>
                     </a>
                 </div>
@@ -36,11 +36,11 @@ $ticketTitle = ($type === 'request') ? 'Submit Request Ticket' : 'Submit Support
                             <div class="col-lg-6 d-flex">
                                 <div class="form-floating flex-grow-1 me-2">
                                     <select class="form-select" id="userSBU" name="sbu" style="width:100%" aria-label="Floating label select example">
-                                    <option value="0" selected>Select SBU</option>
+                                        <option value="0" selected>Select SBU</option>
                                     </select>
                                     <label for="userSBU"><span class="text-danger">*</span>SBU:</label>
                                 </div>
-                                <button id="syncBtn" class="btn btn-primary" type="button" onclick="syncWarehousestoLocalDB()" data-bs-toggle="tooltip" data-bs-placement="top" title="Sync if you can't find your Name, designated SBU or Category"><i class='bx bx-sync'></i></button>
+                                <button id="syncBtn" class="btn btn-primary" type="button" onclick="syncCategoriestoLocalDB()" data-bs-toggle="tooltip" data-bs-placement="top" title="Sync if you can't find the Category"><i class='bx bx-sync'></i></button>
                             </div>
                             <div class="col-lg-4">
                                 <div class="form-floating">

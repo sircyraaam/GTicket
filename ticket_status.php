@@ -68,7 +68,7 @@
     </div>
     <div class="print-btn text-center mt-4">
         <button id="ticketID" onclick="printTicket(this.value)" class="btn btn-outline-primary">Print Ticket</button>
-        <a href="index.php" class="btn btn-outline-secondary">Back to Mainpage</a>
+        <a href="homepage.php" class="btn btn-outline-secondary">Back to Mainpage</a>
     </div>
 </section>
 

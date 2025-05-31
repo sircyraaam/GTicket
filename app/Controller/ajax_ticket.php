@@ -75,11 +75,21 @@ function syncWarehousestoLocalDB($param) {
 
     $siteResult = $records->syncSDPSites($ipAddress);
     $userResult = $records->syncUsertoDB($ipAddress);
-    $categoryResult = $records->syncCategorytoDB($ipAddress);
 
     $result = [
         'site_sync' => $siteResult,
-        'user_sync' => $userResult,
+        'user_sync' => $userResult
+    ];
+
+    echo json_encode($result);
+}
+
+function syncCategorytoLocalDB($param) {
+    $records = new Ticket($param);
+    $ipAddress = getClientIpAddress();
+    $categoryResult = $records->syncCategorytoDB($ipAddress);
+
+    $result = [
         'category_sync' => $categoryResult
     ];
 
@@ -109,4 +119,56 @@ function searchTicketByNumber($param){
     $ipAddress = getClientIpAddress();
     $result = $records->getTicketStatusByNumber($ipAddress);
     echo json_encode($result);
+}
+
+function validateAdminPassword($param){
+    $password = $param['password'] ?? '';
+    $adminPasswordHash = '$2y$10$t3Svj6WSSxgvyI0h.ox2aObJIspR7F4T.qVUVutGhdCVQNh60QFMK';
+
+    $isValid = password_verify($password, $adminPasswordHash);
+
+    echo json_encode(['valid' => $isValid]);
+}
+
+function fetchUserDetails($param){
+    $records = new Ticket($param);
+    $result = $records->fetchUserDetailsFromDB();
+    echo json_encode($result);
+}
+
+function signUp($param){
+    $records = new Ticket($param);
+    $ipAddress = getClientIpAddress();
+    $result = $records->signUpNewUser($ipAddress);
+    echo json_encode($result);
+}
+
+function LogIn($param){
+    $ipAddress = getClientIpAddress();
+    $param = array_merge($param, array('ip_address' => $ipAddress));
+
+    $login = new Ticket($param);
+    $user = $login->authenticate();
+
+    if(!$user['isUser'])
+    {
+        echo json_encode($user);
+    }else{
+
+        $login = new Ticket(['user_id' => $user['user_id']]);
+
+        $_SESSION['token'] = $user['token'];
+        $_SESSION['fullname'] = $user['fullname'];
+        $_SESSION['user_id'] = $user['user_id'];
+        $_SESSION['loginid'] = $user['loginid'];
+
+        echo json_encode([
+            'isUser' => true,
+            'token' => $_SESSION['token'],
+            'fullname' => $_SESSION['fullname'],
+            'user_id' => $_SESSION['user_id'],
+            'loginid' => $_SESSION['loginid']
+        ]);
+    }
+
 }

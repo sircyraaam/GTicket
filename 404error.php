@@ -30,7 +30,7 @@
             <h2><strong>Page not found.</strong></h2>
             <p>The requested page does not exist. Please check the URL and try again.</p>
             <div class="link-container">
-            <a target="_self" href="index.php" class="more-link">← Back</a>
+            <a target="_self" href="homepage.php" class="more-link">← Back</a>
             </div>
         </div>
     </body>

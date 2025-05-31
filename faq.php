@@ -10,7 +10,7 @@ include('./inc/header.inc.php');
                 <span class="fw-semibold fs-4 header-title" id="ticket_header">
                     Frequently Asked Questions
                 </span>
-                <a href="index.php" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm rounded-3 px-3 py-2 text-decoration-none back-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Back">
+                <a href="homepage.php" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm rounded-3 px-3 py-2 text-decoration-none back-btn" data-bs-toggle="tooltip" data-bs-placement="top" title="Back">
                     <i class='bx bx-left-arrow-circle fs-5 icon'></i>
                 </a>
             </div>
